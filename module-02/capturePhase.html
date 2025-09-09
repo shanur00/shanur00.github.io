@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>onClickCapture Example</title>
+    <style>
+        *{
+            font-family: 'Agave Nerd Font Mono' !important;
+        }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .parent { 
+            background: lightblue; 
+            padding: 30px; 
+            border: 2px solid blue;
+            margin: 20px 0;
+        }
+        .child { 
+            background: lightcoral; 
+            padding: 20px; 
+            border: 2px solid red;
+            margin: 10px 0;
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px;
+            font-size: 16px;
+        }
+        .log { 
+            background: #f5f5f5; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            height: 200px; 
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>onClickCapture vs onClick</h1>
+    
+    <h3>Case 1: সাধারণ onClick (stopPropagation সহ)</h3>
+    <div class="parent" id="parent1">
+        <div>Parent Div (onClick)</div>
+        <div class="child">
+            <button id="btn1">Button যেটা stopPropagation() করে</button>
+        </div>
+    </div>
+
+    <h3>Case 2: onClickCapture ব্যবহার</h3>
+    <div class="parent" id="parent2">
+        <div>Parent Div (onClickCapture)</div>
+        <div class="child">
+            <button id="btn2">Button যেটা stopPropagation() করে</button>
+        </div>
+    </div>
+
+    <div class="log" id="log">
+        <strong>Event Log:</strong><br>
+    </div>
+
+    <button onclick="clearLog()">Clear Log</button>
+
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            log.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            log.innerHTML = '<strong>Event Log:</strong><br>';
+        }
+
+        // Case 1: সাধারণ onClick
+        document.getElementById('parent1').addEventListener('click', () => {
+            addLog('🔵 Parent 1 clicked (Bubble Phase)');
+        });
+
+        document.getElementById('btn1').addEventListener('click', (e) => {
+            addLog('🔴 Button 1 clicked - stopPropagation() called');
+            e.stopPropagation(); // এটা bubble phase বন্ধ করে দেয়
+        });
+
+        // Case 2: onClickCapture
+        document.getElementById('parent2').addEventListener('click', () => {
+            addLog('🟢 Parent 2 clicked (Capture Phase) - এটা সবসময় চলবে!');
+        }, { capture: true }); // এইটাই হলো onClickCapture
+
+        document.getElementById('btn2').addEventListener('click', (e) => {
+            addLog('🔴 Button 2 clicked - stopPropagation() called');
+            e.stopPropagation(); // এটা bubble phase বন্ধ করে, কিন্তু capture phase আগেই হয়ে গেছে
+        });
+
+        // Analytics example - সব ক্লিক ট্র্যাক করার জন্য
+        document.body.addEventListener('click', (e) => {
+            addLog(`📊 Analytics: ${e.target.tagName} clicked at ${e.target.textContent?.substring(0, 20)}...`);
+        }, { capture: true });
+    </script>
+</body>
+</html>

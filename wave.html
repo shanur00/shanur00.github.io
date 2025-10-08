@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wave Properties Interactive Visualization</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Ubuntu Sans Mono' !important;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      color: #fff;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .visualization {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .circle-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+    }
+
+    .circle-canvas {
+      border: 2px solid #667eea;
+      border-radius: 10px;
+      background: #f8f9fa;
+      cursor: grab;
+    }
+
+    .circle-canvas:active {
+      cursor: grabbing;
+    }
+
+    .wave-container {
+      flex: 1;
+      min-width: 400px;
+    }
+
+    .wave-canvas {
+      border: 2px solid #667eea;
+      border-radius: 10px;
+      background: #f8f9fa;
+      width: 100%;
+    }
+
+    .controls {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .control-group {
+      margin-bottom: 20px;
+    }
+
+    .control-group label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: #ddd;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-thumb:hover {
+      background: #764ba2;
+      transform: scale(1.2);
+    }
+
+    .control-group input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+    }
+
+    .value-display {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 13px;
+      margin-left: 10px;
+    }
+
+    .info-panel {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .info-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-card h3 {
+      color: #667eea;
+      font-size: 14px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .info-card p {
+      color: #333;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .info-card small {
+      color: #666;
+      font-size: 12px;
+    }
+
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .play-pause {
+      font-size: 18px;
+    }
+
+    .instruction {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #1976d2;
+      font-size: 14px;
+    }
+
+    .instruction strong {
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🌊 Wave Properties Visualization</h1>
+
+  <div class="container">
+    <div class="instruction">
+      <strong>💡 Tip:</strong> Click and drag the red point on the circle to manually control the wave phase! The green
+      projection point updates automatically.
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>
+          Frequency (Hz): <span class="value-display" id="freq-value">1.00</span>
+        </label>
+        <input type="range" id="frequency" min="0.1" max="5" step="0.1" value="1">
+      </div>
+
+      <div class="control-group">
+        <label>
+          Amplitude: <span class="value-display" id="amp-value">50</span>
+        </label>
+        <input type="range" id="amplitude" min="10" max="100" step="5" value="50">
+      </div>
+
+      <div class="control-group">
+        <label>
+          Wave Speed (m/s): <span class="value-display" id="speed-value">100</span>
+        </label>
+        <input type="range" id="speed" min="50" max="200" step="10" value="100">
+      </div>
+
+      <button class="play-pause" id="playPause">⏸️ Pause</button>
+      <button id="reset">🔄 Reset</button>
+    </div>
+
+    <div class="visualization">
+      <div class="circle-container">
+        <canvas id="circleCanvas" class="circle-canvas" width="300" height="300"></canvas>
+      </div>
+
+      <div class="wave-container">
+        <canvas id="waveCanvas" class="wave-canvas" width="600" height="300"></canvas>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <div class="info-card">
+        <h3>Frequency</h3>
+        <p id="info-freq">1.00 Hz</p>
+        <small>Cycles per second</small>
+      </div>
+
+      <div class="info-card">
+        <h3>Wavelength</h3>
+        <p id="info-wavelength">100.0 m</p>
+        <small>Distance per cycle</small>
+      </div>
+
+      <div class="info-card">
+        <h3>Time Period</h3>
+        <p id="info-period">1.00 s</p>
+        <small>Time per cycle</small>
+      </div>
+
+      <div class="info-card">
+        <h3>Angular Velocity</h3>
+        <p id="info-omega">6.28 rad/s</p>
+        <small>Rotation speed</small>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Canvas setup
+    const circleCanvas = document.getElementById('circleCanvas');
+    const waveCanvas = document.getElementById('waveCanvas');
+    const circleCtx = circleCanvas.getContext('2d');
+    const waveCtx = waveCanvas.getContext('2d');
+
+    // Controls
+    const frequencySlider = document.getElementById('frequency');
+    const amplitudeSlider = document.getElementById('amplitude');
+    const speedSlider = document.getElementById('speed');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+
+    // State
+    let frequency = parseFloat(frequencySlider.value);
+    let amplitude = parseFloat(amplitudeSlider.value);
+    let waveSpeed = parseFloat(speedSlider.value);
+    let angle = 0;
+    let isPlaying = true;
+    let animationId;
+    let isDragging = false;
+
+    // Circle parameters
+    const centerX = circleCanvas.width / 2;
+    const centerY = circleCanvas.height / 2;
+    const radius = 100;
+
+    // Calculate derived values
+    function calculateValues() {
+      const period = 1 / frequency; // T = 1/f
+      const wavelength = waveSpeed / frequency; // λ = v/f
+      const omega = 2 * Math.PI * frequency; // ω = 2πf
+
+      return { period, wavelength, omega };
+    }
+
+    // Update info display
+    function updateInfo() {
+      const { period, wavelength, omega } = calculateValues();
+
+      document.getElementById('freq-value').textContent = frequency.toFixed(2);
+      document.getElementById('amp-value').textContent = amplitude.toFixed(0);
+      document.getElementById('speed-value').textContent = waveSpeed.toFixed(0);
+
+      document.getElementById('info-freq').textContent = frequency.toFixed(2) + ' Hz';
+      document.getElementById('info-wavelength').textContent = wavelength.toFixed(1) + ' m';
+      document.getElementById('info-period').textContent = period.toFixed(2) + ' s';
+      document.getElementById('info-omega').textContent = omega.toFixed(2) + ' rad/s';
+    }
+
+    // Get mouse position relative to canvas
+    function getMousePos(canvas, evt) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    // Calculate angle from mouse position
+    function calculateAngle(mouseX, mouseY) {
+      const dx = mouseX - centerX;
+      const dy = centerY - mouseY; // Invert Y because canvas Y goes down
+      return Math.atan2(dy, dx);
+    }
+
+    // Check if mouse is near the red point
+    function isNearPoint(mouseX, mouseY) {
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY - radius * Math.sin(angle);
+      const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+      return distance < 20; // 20px threshold
+    }
+
+    // Mouse event handlers
+    circleCanvas.addEventListener('mousedown', (e) => {
+      const pos = getMousePos(circleCanvas, e);
+      if (isNearPoint(pos.x, pos.y)) {
+        isDragging = true;
+        isPlaying = false;
+        playPauseBtn.textContent = '▶️ Play';
+      }
+    });
+
+    circleCanvas.addEventListener('mousemove', (e) => {
+      const pos = getMousePos(circleCanvas, e);
+
+      // Change cursor when near the point
+      if (isNearPoint(pos.x, pos.y) || isDragging) {
+        circleCanvas.style.cursor = isDragging ? 'grabbing' : 'grab';
+      } else {
+        circleCanvas.style.cursor = 'default';
+      }
+
+      if (isDragging) {
+        angle = calculateAngle(pos.x, pos.y);
+        // Normalize angle to [0, 2π]
+        if (angle < 0) angle += 2 * Math.PI;
+      }
+    });
+
+    circleCanvas.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    circleCanvas.addEventListener('mouseleave', () => {
+      isDragging = false;
+    });
+
+    // Touch support for mobile
+    circleCanvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const pos = getMousePos(circleCanvas, touch);
+      if (isNearPoint(pos.x, pos.y)) {
+        isDragging = true;
+        isPlaying = false;
+        playPauseBtn.textContent = '▶️ Play';
+      }
+    });
+
+    circleCanvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (isDragging) {
+        const touch = e.touches[0];
+        const pos = getMousePos(circleCanvas, touch);
+        angle = calculateAngle(pos.x, pos.y);
+        if (angle < 0) angle += 2 * Math.PI;
+      }
+    });
+
+    circleCanvas.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    // Draw circle animation
+    function drawCircle() {
+      // Clear canvas
+      circleCtx.clearRect(0, 0, circleCanvas.width, circleCanvas.height);
+
+      // Draw coordinate axes
+      circleCtx.strokeStyle = '#ccc';
+      circleCtx.lineWidth = 1;
+      circleCtx.beginPath();
+      circleCtx.moveTo(0, centerY);
+      circleCtx.lineTo(circleCanvas.width, centerY);
+      circleCtx.moveTo(centerX, 0);
+      circleCtx.lineTo(centerX, circleCanvas.height);
+      circleCtx.stroke();
+
+      // Draw circle
+      circleCtx.strokeStyle = '#667eea';
+      circleCtx.lineWidth = 2;
+      circleCtx.beginPath();
+      circleCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      circleCtx.stroke();
+
+      // Calculate position
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY - radius * Math.sin(angle);
+
+      // Draw radius line
+      circleCtx.strokeStyle = '#764ba2';
+      circleCtx.lineWidth = 2;
+      circleCtx.beginPath();
+      circleCtx.moveTo(centerX, centerY);
+      circleCtx.lineTo(x, y);
+      circleCtx.stroke();
+
+      // Draw rotating point (RED)
+      circleCtx.fillStyle = '#ff6b6b';
+      circleCtx.beginPath();
+      circleCtx.arc(x, y, 8, 0, 2 * Math.PI);
+      circleCtx.fill();
+
+      // Add white border to make it stand out
+      circleCtx.strokeStyle = '#fff';
+      circleCtx.lineWidth = 2;
+      circleCtx.stroke();
+
+      // Draw projection line to side
+      circleCtx.strokeStyle = '#4ecdc4';
+      circleCtx.lineWidth = 2;
+      circleCtx.setLineDash([5, 5]);
+      circleCtx.beginPath();
+      circleCtx.moveTo(x, y);
+      circleCtx.lineTo(circleCanvas.width - 20, y);
+      circleCtx.stroke();
+      circleCtx.setLineDash([]);
+
+      // Draw projection point (GREEN)
+      circleCtx.fillStyle = '#4ecdc4';
+      circleCtx.beginPath();
+      circleCtx.arc(circleCanvas.width - 20, y, 6, 0, 2 * Math.PI);
+      circleCtx.fill();
+
+      // Add white border
+      circleCtx.strokeStyle = '#fff';
+      circleCtx.lineWidth = 2;
+      circleCtx.stroke();
+
+      // Draw angle arc
+      circleCtx.strokeStyle = '#ffa500';
+      circleCtx.lineWidth = 2;
+      circleCtx.beginPath();
+      circleCtx.arc(centerX, centerY, 30, 0, -angle, true);
+      circleCtx.stroke();
+
+      // Draw angle text
+      circleCtx.fillStyle = '#333';
+      circleCtx.font = 'bold 14px Arial';
+      circleCtx.fillText((angle * 180 / Math.PI).toFixed(0) + '°', centerX + 40, centerY - 20);
+
+      // Draw instruction text if dragging
+      if (isDragging) {
+        circleCtx.fillStyle = '#ff6b6b';
+        circleCtx.font = 'bold 12px Arial';
+        circleCtx.fillText('Dragging...', 10, 20);
+      }
+    }
+
+    // Draw wave
+    function drawWave() {
+      const centerY = waveCanvas.height / 2;
+      const { wavelength } = calculateValues();
+
+      // Clear canvas
+      waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+
+      // Draw center line
+      waveCtx.strokeStyle = '#ccc';
+      waveCtx.lineWidth = 1;
+      waveCtx.beginPath();
+      waveCtx.moveTo(0, centerY);
+      waveCtx.lineTo(waveCanvas.width, centerY);
+      waveCtx.stroke();
+
+      // Draw wavelength markers
+      const pixelsPerMeter = waveCanvas.width / 300; // Assume 300m view
+      const wavelengthPixels = wavelength * pixelsPerMeter;
+
+      waveCtx.strokeStyle = '#e0e0e0';
+      waveCtx.lineWidth = 1;
+      waveCtx.setLineDash([3, 3]);
+      for (let x = 0; x < waveCanvas.width; x += wavelengthPixels) {
+        waveCtx.beginPath();
+        waveCtx.moveTo(x, 0);
+        waveCtx.lineTo(x, waveCanvas.height);
+        waveCtx.stroke();
+      }
+      waveCtx.setLineDash([]);
+
+      // Draw wave
+      waveCtx.strokeStyle = '#667eea';
+      waveCtx.lineWidth = 3;
+      waveCtx.beginPath();
+
+      const k = 2 * Math.PI / wavelength; // wave number
+      const phaseShift = angle;
+
+      for (let x = 0; x < waveCanvas.width; x++) {
+        const distance = x / pixelsPerMeter;
+        const y = centerY - amplitude * Math.sin(k * distance - phaseShift);
+
+        if (x === 0) {
+          waveCtx.moveTo(x, y);
+        } else {
+          waveCtx.lineTo(x, y);
+        }
+      }
+      waveCtx.stroke();
+
+      // Draw current position indicator (matches the green projection point)
+      const currentY = centerY - amplitude * Math.sin(-phaseShift);
+      waveCtx.fillStyle = '#4ecdc4';
+      waveCtx.beginPath();
+      waveCtx.arc(20, currentY, 8, 0, 2 * Math.PI);
+      waveCtx.fill();
+
+      // Add white border
+      waveCtx.strokeStyle = '#fff';
+      waveCtx.lineWidth = 2;
+      waveCtx.stroke();
+
+      // Draw wavelength label
+      waveCtx.fillStyle = '#333';
+      waveCtx.font = 'bold 12px Arial';
+      waveCtx.fillText('λ = ' + wavelength.toFixed(1) + 'm', 10, 20);
+    }
+
+    // Animation loop
+    function animate() {
+      if (isPlaying && !isDragging) {
+        const { omega } = calculateValues();
+        angle += omega * 0.016; // Assuming ~60fps (16ms per frame)
+
+        if (angle > 2 * Math.PI) {
+          angle -= 2 * Math.PI;
+        }
+      }
+
+      drawCircle();
+      drawWave();
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // Event listeners
+    frequencySlider.addEventListener('input', (e) => {
+      frequency = parseFloat(e.target.value);
+      updateInfo();
+    });
+
+    amplitudeSlider.addEventListener('input', (e) => {
+      amplitude = parseFloat(e.target.value);
+      updateInfo();
+    });
+
+    speedSlider.addEventListener('input', (e) => {
+      waveSpeed = parseFloat(e.target.value);
+      updateInfo();
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      playPauseBtn.textContent = isPlaying ? '⏸️ Pause' : '▶️ Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      angle = 0;
+      frequency = 1;
+      amplitude = 50;
+      waveSpeed = 100;
+      isPlaying = false;
+      isDragging = false;
+
+      frequencySlider.value = frequency;
+      amplitudeSlider.value = amplitude;
+      speedSlider.value = waveSpeed;
+      playPauseBtn.textContent = '▶️ Play';
+
+      updateInfo();
+    });
+
+    // Initialize
+    updateInfo();
+    animate();
+  </script>
+</body>
+
+</html>

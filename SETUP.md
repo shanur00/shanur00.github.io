@@ -95,7 +95,6 @@ code --install-extension msjsdiag.vscode-react-native
 #### Additional Helpful Extensions
 ```bash
 code --install-extension ritwickdey.liveserver
-code --install-extension ms-vscode.live-server
 code --install-extension christian-kohler.path-intellisense
 ```
 

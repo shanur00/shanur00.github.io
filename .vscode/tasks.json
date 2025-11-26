@@ -37,20 +37,6 @@
         "panel": "new"
       },
       "problemMatcher": "$gcc"
-    },
-    {
-      "label": "Run current file",
-      "type": "shell",
-      "command": "${fileDirname}/${fileBasenameNoExtension}",
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "dependsOn": ["Build C file"]
     }
   ]
 }

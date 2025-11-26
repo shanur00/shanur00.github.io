@@ -23,20 +23,18 @@ sudo snap install --classic code
 1. Update the package index and install dependencies:
 ```bash
 sudo apt update
-sudo apt install software-properties-common apt-transport-https wget
+sudo apt install software-properties-common apt-transport-https wget gpg
 ```
 
 2. Import the Microsoft GPG key:
 ```bash
-wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add -
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+rm -f packages.microsoft.gpg
 ```
 
-3. Enable the VS Code repository:
-```bash
-sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
-```
-
-4. Install VS Code:
+3. Install VS Code:
 ```bash
 sudo apt update
 sudo apt install code

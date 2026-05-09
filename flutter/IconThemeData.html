@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter Tier 1 Notes: IconButton</title>
+    
+    <!-- Highlight.js with Tokyo Night Dark Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+    
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f4f4f9;
+        }
+        h1 { 
+            text-align: center;
+            color: #01579b; 
+            border-bottom: 3px solid #0288d1; 
+            padding-bottom: 10px; 
+        }
+        section { 
+            background: #fff; 
+            margin-bottom: 30px; 
+            padding: 25px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h2 { 
+            color: #0288d1; 
+            margin-top: 0; 
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        pre { 
+            /* Tokyo Night background matching */
+            background: #1a1b26; 
+            padding: 15px; 
+            border-radius: 6px; 
+            overflow-x: auto; 
+            font-size: 14px;
+        }
+        code { 
+            font-family: 'Consolas', 'Courier New', monospace; 
+        }
+        .rule-box { 
+            background: #e1f5fe; 
+            border-left: 5px solid #03a9f4; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 0 6px 6px 0;
+        }
+        .rule-box ul { margin: 0; padding-left: 20px; }
+        .rule-box li { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <h1>Flutter Notes: IconButton Styling</h1>
+
+    <!-- SECTION 1: SELECTION -->
+    <section>
+        <h2>1. Selection (Toggling States)</h2>
+        <p>An IconButton can act as a toggle switch. This requires managing state to flip between the default icon and the selected icon.</p>
+        
+        <pre><code class="language-dart">bool isFavorited = false;
+
+// Inside the build method:
+IconButton(
+  iconSize: 72,
+  icon: const Icon(Icons.favorite_border),
+  isSelected: isFavorited,
+  selectedIcon: const Icon(Icons.favorite, color: Colors.amber),
+  onPressed: () {
+    setState(() {
+      isFavorited = !isFavorited;
+    });
+  },
+)</code></pre>
+
+        <div class="rule-box">
+            <strong>Important Rules:</strong>
+            <ul>
+                <li>The <code>isSelected</code> property determines which icon is displayed.</li>
+                <li>When <code>isSelected</code> is false, the widget assigned to <code>icon</code> is shown.</li>
+                <li>When <code>isSelected</code> is true, the widget assigned to <code>selectedIcon</code> is shown.</li>
+                <li>You must wrap the boolean toggle inside <code>setState(() { ... })</code> within the <code>onPressed</code> callback to force the UI to rebuild and show the new state.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SECTION 2: ICON THEMEDATA VS ICONBUTTONTHEME -->
+    <section>
+        <h2>2. IconTheme vs IconButtonTheme</h2>
+        <p>Flutter resolves the styles for an IconButton based on a strict order of precedence. A more specific theme or a direct widget property will override general themes.</p>
+
+        <pre><code class="language-dart">// Inside MaterialApp:
+theme: ThemeData(
+  iconTheme: const IconThemeData(color: Colors.green),
+  iconButtonTheme: IconButtonThemeData(
+    style: IconButton.styleFrom(
+      foregroundColor: Colors.blue,
+    ),
+  ),
+),
+
+// Inside the Widget Tree:
+IconButton(
+  color: Colors.red,
+  // ... other properties
+)</code></pre>
+
+        <div class="rule-box">
+            <strong>Important Rules:</strong>
+            <ul>
+                <li><strong>Priority 1 (Widget Property):</strong> The <code>color: Colors.red</code> applied directly to the IconButton is the strongest and overrides all themes.</li>
+                <li><strong>Priority 2 (IconButtonTheme):</strong> If the direct color property was missing, it would fallback to <code>Colors.blue</code>. The IconButtonTheme overrides the general IconTheme because it is a widget-specific theme.</li>
+                <li><strong>Priority 3 (IconTheme):</strong> The <code>Colors.green</code> acts as the absolute baseline. It only applies if the widget is a standalone Icon and has no specific widget theme or direct color property applied to it.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SECTION 3: VISUAL DENSITY -->
+    <section>
+        <h2>3. Visual Density (Shape & Size)</h2>
+        <p>Visual density adjusts the compactness of the button. In Material Design 3, altering the visual density changes the background shape of the IconButton. It can be set at the theme level or on the widget directly.</p>
+
+        <pre><code class="language-dart">// 1. Inside MaterialApp Theme:
+theme: ThemeData(
+  iconButtonTheme: IconButtonThemeData(
+    style: IconButton.styleFrom(
+      visualDensity: VisualDensity.compact,
+    ),
+  ),
+),
+
+// 2. Inside the Widget Tree:
+IconButton(
+  style: IconButton.styleFrom(visualDensity: VisualDensity.standard),
+  visualDensity: VisualDensity.compact,
+)</code></pre>
+
+        <div class="rule-box">
+            <strong>Important Rules:</strong>
+            <ul>
+                <li><code>VisualDensity.standard</code> is the default in Material 3 and gives the IconButton a perfect circular shape.</li>
+                <li><code>VisualDensity.compact</code> reduces the padding and transforms the shape into a rounded rectangle.</li>
+                <li><strong>Theme Level vs Widget Level:</strong> The compact setting in the <code>ThemeData</code> is applied to all IconButtons globally, unless a specific button overrides it.</li>
+                <li><strong>Conflict Resolution (Widget overrides Theme):</strong> Even though the global theme sets density to compact, the button's explicit <code>style</code> property overrides the theme. In this code, the button remains circular because the <code>style</code> property enforces <code>standard</code>, overriding both the theme and the direct <code>visualDensity</code> shortcut property below it.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SECTION 4: FULL CODE -->
+    <section>
+        <h2>4. Full Source Code</h2>
+        <p>The complete main.dart implementation demonstrating these rules in action.</p>
+        
+        <pre><code class="language-dart">import 'package:flutter/material.dart';
+
+void main() {
+  runApp(
+    MaterialApp(
+      theme: ThemeData(
+        //[IconTheme] PRIORITY 4: IconTheme (Weakest overall)
+        // General fallback for all standalone icons.
+        iconTheme: const IconThemeData(color: Colors.green),
+        
+        //[IconTheme VS IconButtonTheme] PRIORITY 3: IconButtonTheme
+        // This beats the general IconTheme because it is specifically for IconButtons.
+        iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            foregroundColor: Colors.blue,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+      ),
+      home: const MainApp(),
+    ),
+  );
+}
+
+class MainApp extends StatefulWidget {
+  const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() {
+    return _MainAppState();
+  }
+}
+
+class _MainAppState extends State<MainApp> {
+  bool isFavorited = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: IconButton(
+          //[Widget Property] PRIORITY 2: Direct Widget Property (Shortcut)
+          // This will color the icon red, overriding the themes above.
+          color: Colors.red,
+          
+          //[styleFrom] PRIORITY 1: Widget Style (The Ultimate Boss - Strongest)
+          // This overrides EVERYTHING else. Since we set the visualDensity to standard here,
+          // it takes absolute control of the button's shape.
+          style: IconButton.styleFrom(visualDensity: VisualDensity.standard),
+          
+          iconSize: 72,
+          icon: const Icon(Icons.favorite_border),
+          isSelected: isFavorited,
+          selectedIcon: const Icon(Icons.favorite, color: Colors.amber),
+          
+          //[visualDensity] PRIORITY 2: Direct Widget Property (Shortcut)
+          // WHY THIS HAS NO EFFECT: Because the Ultimate Boss (`style` property above) 
+          // is already actively setting the visualDensity. The Boss ignores this shortcut.
+          visualDensity: VisualDensity.compact, 
+          
+          onPressed: () {
+            setState(() {
+              isFavorited = !isFavorited;
+            });
+          },
+        ),
+      ),
+    );
+  }
+}</code></pre>
+    </section>
+
+    <!-- Highlight.js Initialization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dart.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

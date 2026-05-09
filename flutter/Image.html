@@ -83,16 +83,25 @@
             </ul>
         </div>
 
-        <pre><code class="language-dart">// 1. Network Image with a Loading Spinner
+        <pre><code class="language-dart">// 1. Image.network (The UI Widget)
 Image.network(
-  'https://raw.githubusercontent.com/your-repo/main/img.jpeg',
+  'https://raw.githubusercontent.com/shanur00/shanur00.github.io/main/flutter/img.jpeg',
   loadingBuilder: (context, child, progress) {
     if (progress == null) return child;
     return const Center(child: CircularProgressIndicator());
   },
 )
 
-// 2. Asset Image (Local File)
+// 2. NetworkImage (The ImageProvider used for backgrounds)
+Container(
+  decoration: BoxDecoration(
+    image: DecorationImage(
+      image: NetworkImage('https://raw.githubusercontent.com/shanur00/shanur00.github.io/main/flutter/img.jpeg'),
+    ),
+  ),
+)
+
+// 3. Image.asset (Local File)
 Image.asset(
   'assets/img.jpeg',
   errorBuilder: (context, error, stackTrace) {
@@ -120,7 +129,7 @@ Image.asset(
   height: 100, // A wide, short box
   color: Colors.red[200], // Background color to reveal empty space
   child: Image.network(
-    'https://raw.githubusercontent.com/your-repo/main/img.jpeg',
+    'https://raw.githubusercontent.com/shanur00/shanur00.github.io/main/flutter/img.jpeg',
     fit: BoxFit.cover, // Change to contain, cover, or fill
   ),
 )</code></pre>
@@ -129,22 +138,21 @@ Image.asset(
     <!-- SECTION 3: COLOR & BLEND MODE -->
     <section>
         <h2>3. Color and BlendMode</h2>
-        <p>You can apply color filters directly to an image without needing complex external tools.</p>
+        <p>These two properties work together. By themselves, images are just normal pictures. But if you apply a <code>color</code>, you can tint or filter the image. The <code>colorBlendMode</code> tells Flutter <em>how</em> to mix that color with the image pixels.</p>
 
         <div class="rule-box">
-            <strong>Important Rules:</strong>
+            <strong>Common Variations:</strong>
             <ul>
-                <li>The <code>color</code> property defines the tint to apply.</li>
-                <li>The <code>colorBlendMode</code> property tells Flutter how to mix the tint with the image pixels.</li>
-                <li><code>BlendMode.color</code>: Tints the entire image while preserving details.</li>
-                <li><code>BlendMode.darken</code>: Darkens the image. Useful for creating contrast behind white text.</li>
+                <li><code>BlendMode.color</code>: Applies the color as a solid tint over the image while keeping the dark and light details.</li>
+                <li><code>BlendMode.darken</code>: Darkens the image using the provided color. Great for making background images dark so white text is readable on top.</li>
+                <li><code>BlendMode.colorBurn</code>: Creates a high-contrast, intense color filter effect.</li>
             </ul>
         </div>
 
         <pre><code class="language-dart">Image.network(
-  'https://raw.githubusercontent.com/your-repo/main/img.jpeg',
-  color: Colors.black.withOpacity(0.5),
-  colorBlendMode: BlendMode.darken,
+  'https://raw.githubusercontent.com/shanur00/shanur00.github.io/main/flutter/img.jpeg',
+  color: Colors.blue, // The color to mix
+  colorBlendMode: BlendMode.color, // How to mix it (makes the whole image look blue)
 )</code></pre>
     </section>
 
@@ -165,7 +173,7 @@ Image.asset(
         <pre><code class="language-dart">ClipRRect(
   borderRadius: BorderRadius.circular(20),
   child: Image.network(
-    'https://raw.githubusercontent.com/your-repo/main/img.jpeg',
+    'https://raw.githubusercontent.com/shanur00/shanur00.github.io/main/flutter/img.jpeg',
     width: 150,
     height: 150,
     fit: BoxFit.cover,
@@ -187,105 +195,67 @@ void main() {
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
-  final String githubImageUrl = 'https://raw.githubusercontent.com/your-repo/main/img.jpeg';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Image Variations')),
-      // SingleChildScrollView allows the column to scroll if items overflow the screen
-      body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-
-              const Text('1. BoxFit.contain with LoadingBuilder'),
-              Container(
-                width: 300,
-                height: 100,
-                color: Colors.red[200],
-                child: Image.network(
-                  githubImageUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                ),
+      appBar: AppBar(title: const Text('BoxFit Examples')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('BoxFit.contain (Leaves empty space)'),
+            // I wrapped the image in a Container with a RED background.
+            // This lets you see the exact shape of the box we are forcing the image into.
+            Container(
+              width: 300,
+              height: 100, // A wide, short box
+              color: Colors.red[200],
+              child: Image.network(
+                'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg',
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },
               ),
-              
-              const SizedBox(height: 30),
+            ),
 
-              const Text('2. BoxFit.cover (Fills box, crops edges)'),
-              Container(
-                width: 300,
-                height: 100,
-                color: Colors.red[200],
-                child: Image.network(
-                  githubImageUrl,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              
-              const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-              const Text('3. BoxFit.fill (Stretches)'),
-              Container(
-                width: 300,
-                height: 100,
-                color: Colors.red[200],
-                child: Image.network(
-                  githubImageUrl,
-                  fit: BoxFit.fill,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              const Text('4. Color BlendMode (Darken)'),
-              Image.network(
-                githubImageUrl,
-                width: 300,
-                height: 100,
+            const Text('BoxFit.cover (Fills box, crops top/bottom)'),
+            Container(
+              width: 300,
+              height: 100,
+              color: Colors.red[200],
+              child: Image.network(
+                'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg',
                 fit: BoxFit.cover,
-                color: Colors.blue.withOpacity(0.5),
-                colorBlendMode: BlendMode.darken,
               ),
+            ),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-              const Text('5. ClipRRect (Rounded Corners)'),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: Image.network(
-                  githubImageUrl,
-                  width: 150,
-                  height: 150,
-                  fit: BoxFit.cover,
-                ),
+            const Text('BoxFit.fill (Stretches and squishes)'),
+            Container(
+              width: 300,
+              height: 100,
+              color: Colors.red[200],
+              child: Image.network(
+                'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg',
+                fit: BoxFit.fill,
               ),
+            ),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-              const Text('6. Image.asset (Local File)'),
-              Container(
-                width: 100,
-                height: 100,
-                color: Colors.blue[100],
-                child: Image.asset(
-                  'assets/img.jpeg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Text('Asset not found!'));
-                  },
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-            ],
-          ),
+            const Text('Image.asset (Local File)'),
+            // Make sure you have added assets/owl.jpg to your pubspec.yaml!
+            SizedBox(
+              width: 100,
+              height: 100,
+              child: Image.asset('assets/candy.png'),
+            ),
+          ],
         ),
       ),
     );
@@ -298,7 +268,7 @@ class MainApp extends StatelessWidget {
         <h2>GitHub Hosted Image</h2>
         <p>This is an example HTML image tag fetching the github image directly into this notes page.</p>
         <!-- Replace the URL with your actual raw github URL for img.jpeg -->
-        <img src="https://raw.githubusercontent.com/flutter/website/main/src/assets/images/docs/owl.jpg" alt="GitHub Hosted Image img.jpeg" class="demo-image">
+        <img src="https://raw.githubusercontent.com/shanur00/shanur00.github.io/main/flutter/img.jpeg" alt="GitHub Hosted Image img.jpeg" class="demo-image">
     </section>
 
     <!-- Highlight.js Initialization -->

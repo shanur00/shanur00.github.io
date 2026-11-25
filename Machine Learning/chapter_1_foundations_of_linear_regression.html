@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 1: Foundations of Linear Regression</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Newsreader (editorial serif for textbook prose), Inter (UI & tables), JetBrains Mono (math & code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+  <!-- MathJax for crisp textbook equations -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            paper: '#FAF8F5',
+            ink: '#1C1917',
+            muted: '#57534E',
+            accent: '#B45309',
+            accentSoft: '#FEF3C7',
+            card: '#FFFFFF',
+            borderWarm: '#E7E5E4'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+      background-color: #FAF8F5;
+      color: #1C1917;
+    }
+    body {
+      font-family: 'Newsreader', Georgia, serif;
+      line-height: 1.75;
+    }
+    .ui-font {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .code-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom range slider styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #E7E5E4;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -5px;
+      background-color: #B45309;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    /* Tooltip styling */
+    .chart-tooltip {
+      position: fixed;
+      pointer-events: none;
+      z-index: 50;
+      background: rgba(28, 25, 23, 0.96);
+      color: #FAFAF9;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      line-height: 1.45;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: opacity 0.12s ease;
+      max-width: 240px;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #FFFFFF !important; }
+      .chapter-container { max-width: 100% !important; padding: 0 !important; }
+      section { break-inside: avoid-page; }
+    }
+  </style>
+</head>
+<body class="bg-paper text-ink antialiased selection:bg-amber-200 selection:text-stone-900">
+
+  <!-- Floating Global Tooltip -->
+  <div id="global-tooltip" class="chart-tooltip hidden opacity-0"></div>
+
+  <!-- Top Book Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-paper/90 backdrop-blur-md border-b border-borderWarm no-print">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between ui-font">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-7 h-7 rounded-md bg-amber-700 text-white font-bold text-xs tracking-wider">CH 1</span>
+        <span class="text-sm font-semibold text-stone-800 truncate">Foundations of Linear Regression</span>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a href="#toc-mobile" class="lg:hidden text-xs font-medium px-3 py-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-50 text-stone-700">Contents</a>
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-stone-900 text-white hover:bg-stone-800 transition shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          <span>Print / Save PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Book Layout -->
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 chapter-container">
+    <div class="lg:grid lg:grid-cols-12 lg:gap-10 items-start">
+
+      <!-- Sticky Desktop Table of Contents Sidebar -->
+      <aside class="hidden lg:block lg:col-span-3 sticky top-20 ui-font no-print">
+        <div class="bg-white/80 border border-borderWarm rounded-2xl p-5 shadow-sm">
+          <p class="text-[11px] font-bold uppercase tracking-widest text-amber-800 mb-3">Chapter Contents</p>
+          <nav class="space-y-1.5 text-[13px]" id="desktop-toc">
+            <a href="#sec-1-1" class="toc-link block py-1.5 px-2.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition">1.1 Dataset &amp; Anatomy of a Line</a>
+            <a href="#sec-1-2" class="toc-link block py-1.5 px-2.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition">1.2 Calculating $m$ and $b$</a>
+            <a href="#sec-1-3" class="toc-link block py-1.5 px-2.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition">1.3 Signal vs. Noise ($\epsilon$)</a>
+            <a href="#sec-1-4" class="toc-link block py-1.5 px-2.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition">1.4 Predictions &amp; Residuals Table</a>
+            <a href="#sec-1-5" class="toc-link block py-1.5 px-2.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition">1.5 Residual Normality (8 Pts)</a>
+            <a href="#sec-1-6" class="toc-link block py-1.5 px-2.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition">1.6 Scaling to 300 Data Points</a>
+            <a href="#sec-1-7" class="toc-link block py-1.5 px-2.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition">1.7 Why a Bell Curve? (Intuition)</a>
+          </nav>
+          <div class="mt-5 pt-4 border-t border-stone-200 text-xs text-stone-500">
+            <p class="font-medium text-stone-700 mb-1">Interactive Edition</p>
+            <p>Hover over points, drag sliders, and switch diagnostic steps inside every figure.</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Chapter Prose Column -->
+      <main class="lg:col-span-9 space-y-14">
+
+        <!-- Chapter Title Header -->
+        <div class="border-b-2 border-stone-900 pb-8">
+          <div class="ui-font inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold tracking-wide uppercase mb-4">
+            <span>Interactive Machine Learning Textbook</span>
+            <span>•</span>
+            <span>Chapter 01</span>
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-semibold tracking-tight text-stone-900 leading-tight mb-4">
+            Foundations of Linear Regression
+          </h1>
+          <p class="text-lg sm:text-xl text-stone-600 italic leading-relaxed">
+            From raw data points and hand-derived slopes to signal, noise, and why residuals form a normal bell curve—built directly from our step-by-step dialogue.
+          </p>
+
+          <!-- Mobile Table of Contents -->
+          <div id="toc-mobile" class="lg:hidden mt-6 p-4 rounded-xl bg-white border border-borderWarm ui-font no-print">
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-2">In This Chapter</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+              <a href="#sec-1-1" class="py-1 px-2 rounded hover:bg-stone-100 text-stone-700">1.1 Dataset &amp; Anatomy of a Line</a>
+              <a href="#sec-1-2" class="py-1 px-2 rounded hover:bg-stone-100 text-stone-700">1.2 Calculating $m$ and $b$</a>
+              <a href="#sec-1-3" class="py-1 px-2 rounded hover:bg-stone-100 text-stone-700">1.3 Signal vs. Noise ($\epsilon$)</a>
+              <a href="#sec-1-4" class="py-1 px-2 rounded hover:bg-stone-100 text-stone-700">1.4 Predictions &amp; Residuals</a>
+              <a href="#sec-1-5" class="py-1 px-2 rounded hover:bg-stone-100 text-stone-700">1.5 Residual Normality (8 Pts)</a>
+              <a href="#sec-1-6" class="py-1 px-2 rounded hover:bg-stone-100 text-stone-700">1.6 Scaling to 300 Points</a>
+              <a href="#sec-1-7" class="py-1 px-2 rounded hover:bg-stone-100 text-stone-700">1.7 Why a Bell Curve?</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1.1 -->
+        <!-- ========================================================= -->
+        <section id="sec-1-1" class="scroll-mt-20 space-y-6">
+          <div class="ui-font flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800">
+            <span>Section 1.1</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-semibold text-stone-900">The Dataset &amp; Anatomy of a Straight Line ($\hat{y} = mx + b$)</h2>
+
+          <!-- Question 1 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 1</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“Give me some data points for linear regression.”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            To build intuition from the ground up, we start with a clean, single-feature dataset tracking <strong>Hours Studied ($x$)</strong> against <strong>Exam Score ($y$)</strong> across 8 students:
+          </p>
+
+          <!-- 8-point dataset table -->
+          <div class="overflow-x-auto bg-white rounded-2xl border border-borderWarm shadow-sm ui-font">
+            <table class="w-full text-sm text-center border-collapse">
+              <thead>
+                <tr class="bg-stone-100/80 border-b border-borderWarm text-stone-700">
+                  <th class="py-3 px-4 font-semibold">Student</th>
+                  <th class="py-3 px-4 font-semibold">Hours Studied ($x$)</th>
+                  <th class="py-3 px-4 font-semibold">Exam Score ($y$)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-100 text-stone-800">
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#1</td><td class="py-2.5 px-4 font-mono">1</td><td class="py-2.5 px-4 font-mono font-semibold">52</td></tr>
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#2</td><td class="py-2.5 px-4 font-mono">2</td><td class="py-2.5 px-4 font-mono font-semibold">58</td></tr>
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#3</td><td class="py-2.5 px-4 font-mono">3</td><td class="py-2.5 px-4 font-mono font-semibold">65</td></tr>
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#4</td><td class="py-2.5 px-4 font-mono">4</td><td class="py-2.5 px-4 font-mono font-semibold">71</td></tr>
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#5</td><td class="py-2.5 px-4 font-mono">5</td><td class="py-2.5 px-4 font-mono font-semibold">78</td></tr>
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#6</td><td class="py-2.5 px-4 font-mono">6</td><td class="py-2.5 px-4 font-mono font-semibold">85</td></tr>
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#7</td><td class="py-2.5 px-4 font-mono">7</td><td class="py-2.5 px-4 font-mono font-semibold">90</td></tr>
+                <tr class="hover:bg-amber-50/40"><td class="py-2.5 px-4 text-stone-500">#8</td><td class="py-2.5 px-4 font-mono">8</td><td class="py-2.5 px-4 font-mono font-semibold">96</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Question 2 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5 mt-8">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 2</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“Now my equation is $y = mx + b$. Now what is $b$? Error or what?”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            <strong>$b$ is the y-intercept</strong> (also called the <strong>bias</strong> in machine learning)—<strong>not</strong> the error. In our linear model $\hat{y} = mx + b$, every symbol has a distinct role:
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 ui-font">
+            <div class="bg-white p-5 rounded-2xl border border-borderWarm shadow-sm">
+              <div class="text-xs font-bold uppercase tracking-wider text-amber-700 mb-1">Intercept / Bias ($b$)</div>
+              <div class="text-2xl font-mono font-bold text-stone-900 mb-2">$b \approx 45.714$</div>
+              <p class="text-xs text-stone-600 leading-relaxed">The starting value of $\hat{y}$ when <strong>$x = 0$</strong>. A student who studies 0 hours is predicted to start with a baseline score of ~45.7 points.</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-borderWarm shadow-sm">
+              <div class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">Slope / Weight ($m$)</div>
+              <div class="text-2xl font-mono font-bold text-stone-900 mb-2">$m \approx 6.369$</div>
+              <p class="text-xs text-stone-600 leading-relaxed">How much $\hat{y}$ rises for every <strong>1-hour increase</strong> in $x$—about <strong>+6.37 exam points</strong> per extra hour studied.</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-borderWarm shadow-sm">
+              <div class="text-xs font-bold uppercase tracking-wider text-rose-700 mb-1">Error / Residual ($e$)</div>
+              <div class="text-2xl font-mono font-bold text-stone-900 mb-2">$e = y - \hat{y}$</div>
+              <p class="text-xs text-stone-600 leading-relaxed">The vertical gap between the <em>actual</em> score ($y$) and the line's <em>predicted</em> score ($\hat{y} = mx + b$).</p>
+            </div>
+          </div>
+
+          <!-- Question 3 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5 mt-8">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 3</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“Plot the point.”</p>
+          </div>
+
+          <!-- Figure 1.1 Interactive Chart -->
+          <figure class="bg-white rounded-2xl border border-borderWarm p-4 sm:p-6 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4 ui-font">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Figure 1.1 • Interactive</span>
+                <h3 class="text-base sm:text-lg font-semibold text-stone-900">Hours Studied vs. Exam Score ($\hat{y} = 6.37x + 45.71$)</h3>
+              </div>
+              <label class="inline-flex items-center gap-2 text-xs font-medium text-stone-700 bg-stone-100 px-3 py-1.5 rounded-lg cursor-pointer select-none">
+                <input type="checkbox" id="fig1-toggle-errors" checked class="rounded text-amber-700 focus:ring-amber-600">
+                <span>Show Error Bars ($e = y - \hat{y}$)</span>
+              </label>
+            </div>
+            <div class="w-full overflow-hidden">
+              <svg id="fig1-svg" class="w-full h-auto block" viewBox="0 0 720 400"></svg>
+            </div>
+            <figcaption class="mt-3 text-xs text-stone-500 ui-font flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 pt-3">
+              <span>Hover over any blue data point or the red y-intercept dot at $x=0$ to inspect exact values.</span>
+              <span class="font-mono text-stone-700">Equation: ŷ = 6.369x + 45.714</span>
+            </figcaption>
+          </figure>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1.2 -->
+        <!-- ========================================================= -->
+        <section id="sec-1-2" class="scroll-mt-20 space-y-6 pt-6 border-t border-borderWarm">
+          <div class="ui-font flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800">
+            <span>Section 1.2</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-semibold text-stone-900">Calculating Slope ($m$) and Intercept ($b$) by Hand</h2>
+
+          <!-- Question 4 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 4</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“Now calculate the $m$ and $b$ first using the formula for our dataset.”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            Using the Ordinary Least Squares (OLS) formulas, we find the exact line that minimizes the sum of squared vertical errors across all 8 points:
+          </p>
+
+          <div class="bg-white rounded-2xl border border-borderWarm p-5 sm:p-6 shadow-sm space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
+              <div class="p-4 rounded-xl bg-stone-50 border border-stone-200">
+                <p class="ui-font text-xs font-semibold uppercase text-stone-500 mb-1">1. Slope Formula</p>
+                <div class="text-base sm:text-lg">$$m = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sum (x_i - \bar{x})^2}$$</div>
+              </div>
+              <div class="p-4 rounded-xl bg-stone-50 border border-stone-200">
+                <p class="ui-font text-xs font-semibold uppercase text-stone-500 mb-1">2. Intercept Formula</p>
+                <div class="text-base sm:text-lg">$$b = \bar{y} - m\bar{x}$$</div>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <h4 class="ui-font text-sm font-bold text-stone-900 mb-2">Step 1: Compute the Sample Means ($\bar{x}$ and $\bar{y}$)</h4>
+              <ul class="list-disc pl-6 space-y-1 text-base text-stone-800">
+                <li>$\bar{x} = \frac{1 + 2 + 3 + 4 + 5 + 6 + 7 + 8}{8} = \frac{36}{8} = \mathbf{4.5}$</li>
+                <li>$\bar{y} = \frac{52 + 58 + 65 + 71 + 78 + 85 + 90 + 96}{8} = \frac{595}{8} = \mathbf{74.375}$</li>
+              </ul>
+            </div>
+
+            <div class="pt-2">
+              <h4 class="ui-font text-sm font-bold text-stone-900 mb-3">Step 2: Compute Deviations &amp; Sums</h4>
+              <div class="overflow-x-auto rounded-xl border border-borderWarm ui-font">
+                <table class="w-full text-xs sm:text-sm text-center border-collapse">
+                  <thead>
+                    <tr class="bg-stone-100 border-b border-borderWarm text-stone-700">
+                      <th class="py-2.5 px-3">$x_i$</th>
+                      <th class="py-2.5 px-3">$y_i$</th>
+                      <th class="py-2.5 px-3">$x_i - \bar{x}$</th>
+                      <th class="py-2.5 px-3">$y_i - \bar{y}$</th>
+                      <th class="py-2.5 px-3">$(x_i - \bar{x})(y_i - \bar{y})$</th>
+                      <th class="py-2.5 px-3">$(x_i - \bar{x})^2$</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-stone-100 font-mono">
+                    <tr><td class="py-2 px-3">1</td><td class="py-2 px-3">52</td><td class="py-2 px-3 text-rose-700">-3.5</td><td class="py-2 px-3 text-rose-700">-22.375</td><td class="py-2 px-3 text-emerald-700">+78.3125</td><td class="py-2 px-3">12.25</td></tr>
+                    <tr><td class="py-2 px-3">2</td><td class="py-2 px-3">58</td><td class="py-2 px-3 text-rose-700">-2.5</td><td class="py-2 px-3 text-rose-700">-16.375</td><td class="py-2 px-3 text-emerald-700">+40.9375</td><td class="py-2 px-3">6.25</td></tr>
+                    <tr><td class="py-2 px-3">3</td><td class="py-2 px-3">65</td><td class="py-2 px-3 text-rose-700">-1.5</td><td class="py-2 px-3 text-rose-700">-9.375</td><td class="py-2 px-3 text-emerald-700">+14.0625</td><td class="py-2 px-3">2.25</td></tr>
+                    <tr><td class="py-2 px-3">4</td><td class="py-2 px-3">71</td><td class="py-2 px-3 text-rose-700">-0.5</td><td class="py-2 px-3 text-rose-700">-3.375</td><td class="py-2 px-3 text-emerald-700">+1.6875</td><td class="py-2 px-3">0.25</td></tr>
+                    <tr><td class="py-2 px-3">5</td><td class="py-2 px-3">78</td><td class="py-2 px-3 text-emerald-700">+0.5</td><td class="py-2 px-3 text-emerald-700">+3.625</td><td class="py-2 px-3 text-emerald-700">+1.8125</td><td class="py-2 px-3">0.25</td></tr>
+                    <tr><td class="py-2 px-3">6</td><td class="py-2 px-3">85</td><td class="py-2 px-3 text-emerald-700">+1.5</td><td class="py-2 px-3 text-emerald-700">+10.625</td><td class="py-2 px-3 text-emerald-700">+15.9375</td><td class="py-2 px-3">2.25</td></tr>
+                    <tr><td class="py-2 px-3">7</td><td class="py-2 px-3">90</td><td class="py-2 px-3 text-emerald-700">+2.5</td><td class="py-2 px-3 text-emerald-700">+15.625</td><td class="py-2 px-3 text-emerald-700">+39.0625</td><td class="py-2 px-3">6.25</td></tr>
+                    <tr><td class="py-2 px-3">8</td><td class="py-2 px-3">96</td><td class="py-2 px-3 text-emerald-700">+3.5</td><td class="py-2 px-3 text-emerald-700">+21.625</td><td class="py-2 px-3 text-emerald-700">+75.6875</td><td class="py-2 px-3">12.25</td></tr>
+                    <tr class="bg-amber-50 font-bold border-t-2 border-stone-300 text-stone-900">
+                      <td class="py-2.5 px-3" colspan="4">Column Sums ($\sum$)</td>
+                      <td class="py-2.5 px-3 text-amber-900">$\sum = 267.5$</td>
+                      <td class="py-2.5 px-3 text-amber-900">$\sum = 42.0$</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <h4 class="ui-font text-sm font-bold text-stone-900 mb-2">Step 3: Plug into the Formulas</h4>
+              <div class="bg-stone-900 text-stone-50 rounded-xl p-4 sm:p-5 space-y-2 text-sm sm:text-base">
+                <p>1. <strong>Slope ($m$):</strong> $\displaystyle m = \frac{267.5}{42.0} \approx \mathbf{6.369}$</p>
+                <p>2. <strong>Intercept ($b$):</strong> $\displaystyle b = 74.375 - (6.369 \times 4.5) = 74.375 - 28.6607 \approx \mathbf{45.714}$</p>
+                <p class="pt-2 border-t border-stone-700 text-amber-300 font-semibold">Final Regression Equation: $\quad \hat{y} = 6.369x + 45.714$</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1.3 -->
+        <!-- ========================================================= -->
+        <section id="sec-1-3" class="scroll-mt-20 space-y-6 pt-6 border-t border-borderWarm">
+          <div class="ui-font flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800">
+            <span>Section 1.3</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-semibold text-stone-900">Signal vs. Noise ($y = mx + b + \epsilon$)</h2>
+
+          <!-- Question 5 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 5</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“But we learn about noise. What is that? Show it using visualization.”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            In real-world data, points never sit on a razor-sharp mathematical line. Every observation $y$ is a combination of two components:
+          </p>
+
+          <div class="bg-white rounded-2xl border border-borderWarm p-5 text-center shadow-sm">
+            <div class="text-lg sm:text-xl">
+              $$y = \underbrace{mx + b}_{\text{Signal (the pattern)}} + \underbrace{\epsilon}_{\text{Noise (randomness)}}$$
+            </div>
+          </div>
+
+          <ul class="list-disc pl-6 space-y-2 text-base sm:text-lg text-stone-800">
+            <li><strong>The Signal ($mx + b$):</strong> The predictable underlying trend—each extra study hour adds roughly $6.37$ points.</li>
+            <li><strong>The Noise ($\epsilon$):</strong> All unmeasured real-world factors—how well the student slept, test anxiety, lucky guesses, or tricky wording. For instance, at <strong>$x = 2$ hours</strong>, the line predicts $58.45$ while the actual score is $58$ ($e = -0.45$); at <strong>$x = 6$ hours</strong>, the line predicts $83.93$ while the actual score is $85$ ($e = +1.07$).</li>
+            <li><strong>Residual vs. Noise:</strong> Because true noise $\epsilon$ is unobservable, we estimate it using the observed vertical gap $e = y - \hat{y}$, called the <strong>residual</strong>.</li>
+          </ul>
+
+          <!-- Figure 1.2 Interactive Signal vs Noise Chart -->
+          <figure class="bg-white rounded-2xl border border-borderWarm p-4 sm:p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 ui-font">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Figure 1.2 • Interactive</span>
+                <h3 class="text-base sm:text-lg font-semibold text-stone-900">Separating Signal ($\hat{y}$) from Noise ($e$)</h3>
+              </div>
+              <div class="flex flex-wrap items-center gap-4 bg-stone-50 px-3.5 py-2 rounded-xl border border-stone-200">
+                <div class="flex items-center gap-2.5">
+                  <label for="noise-slider" class="text-xs font-semibold text-stone-700 whitespace-nowrap">Noise Level:</label>
+                  <input type="range" id="noise-slider" min="0" max="2" step="0.1" value="0" class="w-24 sm:w-32">
+                  <span id="noise-val-label" class="text-xs font-mono font-bold text-amber-800 w-10">0.0x</span>
+                </div>
+                <label class="inline-flex items-center gap-1.5 text-xs font-medium text-stone-700 cursor-pointer select-none">
+                  <input type="checkbox" id="fig2-toggle-labels" checked class="rounded text-amber-700">
+                  <span>Show Residual Labels</span>
+                </label>
+              </div>
+            </div>
+            <div class="w-full overflow-hidden">
+              <svg id="fig2-svg" class="w-full h-auto block" viewBox="0 0 720 400"></svg>
+            </div>
+            <figcaption class="mt-3 text-xs text-stone-500 ui-font flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 pt-3">
+              <span>Drag <strong>Noise Level</strong> from <code>0.0x</code> (original dataset) up to <code>2.0x</code> to see how random noise scatters points while the underlying Signal stays anchored.</span>
+              <span class="inline-flex items-center gap-3">
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span> Positive ($e &gt; 0$)</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block"></span> Negative ($e &lt; 0$)</span>
+              </span>
+            </figcaption>
+          </figure>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1.4 -->
+        <!-- ========================================================= -->
+        <section id="sec-1-4" class="scroll-mt-20 space-y-6 pt-6 border-t border-borderWarm">
+          <div class="ui-font flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800">
+            <span>Section 1.4</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-semibold text-stone-900">Predictions, Residuals, and Sum of Squared Errors</h2>
+
+          <!-- Question 6 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 6</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“Now with our dataset also show the predicted value and calculate the residuals in a table.”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            Plugging each student's study hours $x$ into $\hat{y} = 6.369x + 45.714$ yields the predicted score, the raw residual $e = y - \hat{y}$, and the squared residual $e^2$:
+          </p>
+
+          <div class="overflow-x-auto bg-white rounded-2xl border border-borderWarm shadow-sm ui-font">
+            <table class="w-full text-xs sm:text-sm text-center border-collapse">
+              <thead>
+                <tr class="bg-stone-100 border-b border-borderWarm text-stone-700">
+                  <th class="py-3 px-3">Hours Studied ($x$)</th>
+                  <th class="py-3 px-3">Actual Score ($y$)</th>
+                  <th class="py-3 px-3">Predicted ($\hat{y}$)</th>
+                  <th class="py-3 px-3">Residual ($e = y - \hat{y}$)</th>
+                  <th class="py-3 px-3">Squared Residual ($e^2$)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-100 font-mono">
+                <tr><td class="py-2.5 px-3">1</td><td class="py-2.5 px-3">52</td><td class="py-2.5 px-3">52.08</td><td class="py-2.5 px-3 text-rose-700">-0.08</td><td class="py-2.5 px-3">0.0069</td></tr>
+                <tr><td class="py-2.5 px-3">2</td><td class="py-2.5 px-3">58</td><td class="py-2.5 px-3">58.45</td><td class="py-2.5 px-3 text-rose-700">-0.45</td><td class="py-2.5 px-3">0.2046</td></tr>
+                <tr><td class="py-2.5 px-3">3</td><td class="py-2.5 px-3">65</td><td class="py-2.5 px-3">64.82</td><td class="py-2.5 px-3 text-emerald-700">+0.18</td><td class="py-2.5 px-3">0.0319</td></tr>
+                <tr><td class="py-2.5 px-3">4</td><td class="py-2.5 px-3">71</td><td class="py-2.5 px-3">71.19</td><td class="py-2.5 px-3 text-rose-700">-0.19</td><td class="py-2.5 px-3">0.0363</td></tr>
+                <tr><td class="py-2.5 px-3">5</td><td class="py-2.5 px-3">78</td><td class="py-2.5 px-3">77.56</td><td class="py-2.5 px-3 text-emerald-700">+0.44</td><td class="py-2.5 px-3">0.1940</td></tr>
+                <tr><td class="py-2.5 px-3">6</td><td class="py-2.5 px-3">85</td><td class="py-2.5 px-3">83.93</td><td class="py-2.5 px-3 text-emerald-700">+1.07</td><td class="py-2.5 px-3">1.1480</td></tr>
+                <tr><td class="py-2.5 px-3">7</td><td class="py-2.5 px-3">90</td><td class="py-2.5 px-3">90.30</td><td class="py-2.5 px-3 text-rose-700">-0.30</td><td class="py-2.5 px-3">0.0886</td></tr>
+                <tr><td class="py-2.5 px-3">8</td><td class="py-2.5 px-3">96</td><td class="py-2.5 px-3">96.67</td><td class="py-2.5 px-3 text-rose-700">-0.67</td><td class="py-2.5 px-3">0.4444</td></tr>
+                <tr class="bg-amber-50 font-bold border-t-2 border-stone-300 text-stone-900">
+                  <td class="py-3 px-3" colspan="3">Totals &amp; Averages</td>
+                  <td class="py-3 px-3 text-amber-900">$\sum e = 0.00$</td>
+                  <td class="py-3 px-3 text-amber-900">$\text{SSE} = 2.1548$ ($\text{MSE} = 0.2693$)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm sm:text-base">
+            <div class="bg-white p-4 rounded-xl border border-borderWarm">
+              <p class="font-semibold text-stone-900 mb-1">Why does $\sum e = 0.00$?</p>
+              <p class="text-stone-700">The positive residuals ($+0.18 + 0.44 + 1.07 = +1.69$) and negative residuals ($-0.08 - 0.45 - 0.19 - 0.30 - 0.67 = -1.69$) balance out completely because the OLS line passes right through $(\bar{x}, \bar{y}) = (4.5, 74.375)$.</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-borderWarm">
+              <p class="font-semibold text-stone-900 mb-1">Why do we square the residuals ($e^2$)?</p>
+              <p class="text-stone-700">Because raw errors sum to zero, we square each residual so positive and negative gaps cannot cancel out—giving a <strong>Sum of Squared Errors (SSE) of $2.1548$</strong> and a <strong>Mean Squared Error (MSE) of $0.2693$</strong>.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1.5 -->
+        <!-- ========================================================= -->
+        <section id="sec-1-5" class="scroll-mt-20 space-y-6 pt-6 border-t border-borderWarm">
+          <div class="ui-font flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800">
+            <span>Section 1.5</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-semibold text-stone-900">Do Residuals Follow a Normal Distribution? (8-Point Diagnostic)</h2>
+
+          <!-- Question 7 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 7</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“Now in your response you said that the residual follow a normal distribution. I do not believe you. Show me now with visualization with our dataset value—give me the graph interactive like before and one by one.”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            With only <strong>8 data points</strong>, a histogram will never look like a textbook smooth bell curve. Instead, statisticians inspect three diagnostic plots one by one on our residuals <code>[-0.08, -0.45, +0.18, -0.19, +0.44, +1.07, -0.30, -0.67]</code> (Shapiro-Wilk normality test: <strong>$W = 0.94, p = 0.62 &gt; 0.05$</strong>):
+          </p>
+
+          <!-- Figure 1.3 Interactive 3-Step Diagnostic Explorer -->
+          <figure class="bg-white rounded-2xl border border-borderWarm p-4 sm:p-6 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 ui-font">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Figure 1.3 • Interactive Diagnostic Explorer</span>
+                <h3 id="fig3-title" class="text-base sm:text-lg font-semibold text-stone-900">Step 1: Random Scatter Around Zero</h3>
+              </div>
+              <!-- Step Tabs -->
+              <div class="flex flex-wrap items-center gap-1.5 bg-stone-100 p-1 rounded-xl">
+                <button data-fig3-step="1" class="fig3-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-stone-900 shadow-sm transition">1. Scatter Around 0</button>
+                <button data-fig3-step="2" class="fig3-tab px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition">2. Bell Curve</button>
+                <button data-fig3-step="3" class="fig3-tab px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition">3. Q-Q Plot</button>
+              </div>
+            </div>
+
+            <div class="w-full overflow-hidden">
+              <svg id="fig3-svg" class="w-full h-auto block" viewBox="0 0 720 380"></svg>
+            </div>
+
+            <!-- Takeaway & Prev/Next Bar -->
+            <div class="mt-4 pt-3 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ui-font">
+              <p id="fig3-caption" class="text-xs text-stone-600 leading-relaxed max-w-xl">
+                Points bounce unpredictably above (green) and below (red) the dashed 0.0 line with no curved U-shape or funnel pattern, and their mean is strictly 0.00.
+              </p>
+              <div class="flex items-center gap-2 shrink-0">
+                <button id="fig3-prev" class="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-40">← Previous</button>
+                <button id="fig3-next" class="px-3 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 disabled:opacity-40">Next →</button>
+              </div>
+            </div>
+          </figure>
+
+          <p class="text-sm sm:text-base text-stone-600 italic">
+            <strong>Important nuance:</strong> Linear regression does not force residuals to be normal—OLS finds the best-fit line regardless. Assuming the underlying noise $\epsilon$ is normal is what validates confidence intervals and $p$-values (and why binary $0/1$ outcomes break linear regression, since $0/1$ residuals can never look like a bell curve).
+          </p>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1.6 -->
+        <!-- ========================================================= -->
+        <section id="sec-1-6" class="scroll-mt-20 space-y-6 pt-6 border-t border-borderWarm">
+          <div class="ui-font flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800">
+            <span>Section 1.6</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-semibold text-stone-900">Scaling Up to 300 Data Points (The Central Limit Theorem)</h2>
+
+          <!-- Question 8 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 8</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“So if we take more data points then it will be really the normal distribution? Short answer.”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            <strong>Yes—as long as the underlying real-world noise is random and comes from many small, independent factors</strong> (thanks to the Central Limit Theorem). With 300 or 1,000 students, the histogram of residuals smooths out into a classic bell curve—<strong>unless</strong> the true relationship is curved (non-linear) or the outcomes are binary ($0$ and $1$).
+          </p>
+
+          <!-- Question 9 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5 mt-6">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 9</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“Now write a code for linear regression with 300 data points: (1) plot the data points, (2) plot the line using calculated $m$ and $b$, (3) calculate residuals and plot the points, histogram, and normal curve. Make it intuitive and show it here like before.”</p>
+          </div>
+
+          <!-- Figure 1.4 Interactive 300-Point 4-Step Explorer -->
+          <figure class="bg-white rounded-2xl border border-borderWarm p-4 sm:p-6 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 ui-font">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Figure 1.4 • 300-Point Interactive Walkthrough</span>
+                <h3 id="fig4-title" class="text-base sm:text-lg font-semibold text-stone-900">Part 1: Raw Data Cloud (n = 300 Students)</h3>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 bg-stone-100 p-1 rounded-xl">
+                <button data-fig4-step="1" class="fig4-tab px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-stone-900 shadow-sm transition">1. Raw Data</button>
+                <button data-fig4-step="2" class="fig4-tab px-2.5 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition">2. Fitted Line</button>
+                <button data-fig4-step="3" class="fig4-tab px-2.5 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition">3a. Residuals</button>
+                <button data-fig4-step="4" class="fig4-tab px-2.5 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition">3b. Bell Curve</button>
+              </div>
+            </div>
+
+            <div class="w-full overflow-hidden">
+              <svg id="fig4-svg" class="w-full h-auto block" viewBox="0 0 720 390"></svg>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ui-font">
+              <p id="fig4-caption" class="text-xs text-stone-600 leading-relaxed max-w-xl">
+                Before drawing any line, we observe 300 students' study hours (1 to 10 hrs) and exam scores. Hover over any dot to inspect that student's record.
+              </p>
+              <div class="flex items-center gap-2 shrink-0">
+                <button id="fig4-prev" class="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-40">← Previous</button>
+                <button id="fig4-next" class="px-3 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 disabled:opacity-40">Next →</button>
+              </div>
+            </div>
+          </figure>
+
+          <!-- Python Implementation Block -->
+          <div class="bg-stone-900 rounded-2xl overflow-hidden shadow-md ui-font">
+            <div class="flex items-center justify-between px-4 py-3 bg-stone-800 border-b border-stone-700">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span class="ml-2 text-xs font-mono text-stone-300">linear_regression_300.py</span>
+              </div>
+              <button id="copy-code-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-stone-700 hover:bg-stone-600 text-stone-100 transition">
+                Copy Python Code
+              </button>
+            </div>
+            <pre class="p-4 sm:p-5 text-xs sm:text-[13px] leading-relaxed text-stone-100 overflow-x-auto code-font"><code id="python-code-block">import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# 1. Generate 300 synthetic data points (Signal + Normal Noise)
+np.random.seed(42)
+n = 300
+x = np.random.uniform(1, 10, n)
+true_m, true_b = 6.37, 45.71
+noise = np.random.normal(loc=0, scale=4.0, size=n)
+y = true_m * x + true_b + noise
+
+# 2. Calculate m and b from scratch using OLS formulas
+x_mean = np.mean(x)
+y_mean = np.mean(y)
+
+m = np.sum((x - x_mean) * (y - y_mean)) / np.sum((x - x_mean) ** 2)
+b = y_mean - m * x_mean
+
+# Predictions & Residuals
+y_hat = m * x + b
+residuals = y - y_hat
+
+print(f"Calculated m = {m:.4f}, b = {b:.4f}")
+print(f"Residuals Mean = {np.mean(residuals):.4f}, Std = {np.std(residuals):.4f}")
+
+# 3. Create the 3-part visualization
+fig, axes = plt.subplots(2, 2, figsize=(13, 9), dpi=120)
+
+# --- Part 1: Raw Data Points ---
+axes[0, 0].scatter(x, y, color="#3b82f6", alpha=0.6, edgecolors="none", s=25)
+axes[0, 0].set_title("Part 1: Raw Data Points (n = 300)", fontweight="bold")
+axes[0, 0].set_xlabel("Hours Studied (x)")
+axes[0, 0].set_ylabel("Exam Score (y)")
+axes[0, 0].grid(True, alpha=0.25)
+
+# --- Part 2: Fitted Line using calculated m and b ---
+axes[0, 1].scatter(x, y, color="#3b82f6", alpha=0.45, edgecolors="none", s=25, label="Data Points")
+x_line = np.linspace(x.min(), x.max(), 100)
+axes[0, 1].plot(x_line, m * x_line + b, color="#dc2626", linewidth=2.5,
+                label=f"Fitted Line: ŷ = {m:.2f}x + {b:.2f}")
+axes[0, 1].set_title("Part 2: Linear Regression Fit (m and b)", fontweight="bold")
+axes[0, 1].set_xlabel("Hours Studied (x)")
+axes[0, 1].set_ylabel("Exam Score (y)")
+axes[0, 1].legend()
+axes[0, 1].grid(True, alpha=0.25)
+
+# --- Part 3a: Residuals Scatter Plot ---
+axes[1, 0].scatter(x, residuals, color="#10b981", alpha=0.6, edgecolors="none", s=25)
+axes[1, 0].axhline(0, color="#1f2937", linestyle="--", linewidth=1.5, label="Zero Error Line")
+axes[1, 0].set_title("Part 3a: Residuals Scatter (e = y - ŷ)", fontweight="bold")
+axes[1, 0].set_xlabel("Hours Studied (x)")
+axes[1, 0].set_ylabel("Residual (e)")
+axes[1, 0].legend()
+axes[1, 0].grid(True, alpha=0.25)
+
+# --- Part 3b: Residuals Histogram + Normal Bell Curve ---
+mu, std = np.mean(residuals), np.std(residuals)
+axes[1, 1].hist(residuals, bins=22, density=True, color="#8b5cf6", alpha=0.55,
+                edgecolor="white", label="Residuals Histogram")
+r_grid = np.linspace(residuals.min() - 1, residuals.max() + 1, 200)
+axes[1, 1].plot(r_grid, norm.pdf(r_grid, mu, std), color="#dc2626", linewidth=2.5,
+                label=f"Normal Curve (μ={mu:.2f}, σ={std:.2f})")
+axes[1, 1].axvline(0, color="#1f2937", linestyle="--", linewidth=1.2)
+axes[1, 1].set_title("Part 3b: Residuals Histogram & Normal Curve", fontweight="bold")
+axes[1, 1].set_xlabel("Residual Value (e)")
+axes[1, 1].set_ylabel("Density")
+axes[1, 1].legend()
+axes[1, 1].grid(True, alpha=0.25)
+
+plt.tight_layout()
+plt.show()</code></pre>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1.7 -->
+        <!-- ========================================================= -->
+        <section id="sec-1-7" class="scroll-mt-20 space-y-6 pt-6 border-t border-borderWarm">
+          <div class="ui-font flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800">
+            <span>Section 1.7</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-semibold text-stone-900">Why Do Residuals Form a Bell Curve? (Middle vs. Ends)</h2>
+
+          <!-- Question 10 -->
+          <div class="bg-amber-50/80 border-l-4 border-amber-600 rounded-r-xl p-4 sm:p-5">
+            <p class="ui-font text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1">Reader Question 10</p>
+            <p class="text-base sm:text-lg font-medium text-stone-900 italic">“So why do the residuals follow a normal distribution? I mean the middle data points have more residuals than the two ends. Why?”</p>
+          </div>
+
+          <p class="text-base sm:text-lg text-stone-800">
+            That observation gets right to the heart of statistics. There are <strong>two distinct phenomena</strong> happening here—one along the horizontal axis of the bell curve ($e = 0$ vs. extreme errors), and one along the study-hours axis ($x$ in the middle vs. $x$ at the ends):
+          </p>
+
+          <div class="space-y-4">
+            <div class="bg-white rounded-2xl border border-borderWarm p-5 sm:p-6 shadow-sm space-y-3">
+              <h3 class="ui-font text-base sm:text-lg font-bold text-stone-900">1. Why the Middle of the Bell Curve ($e \approx 0$) Has Way More Points</h3>
+              <p class="text-base text-stone-800">
+                Real-world exam noise is the sum of dozens of tiny, independent random factors: how well you slept, whether a lucky topic showed up, breakfast, room temperature, or misreading a word.
+              </p>
+              <p class="text-base text-stone-800">
+                Imagine flipping <strong>10 independent coins</strong>, where <strong>Heads = $+1$ point</strong> and <strong>Tails = $-1$ point</strong>:
+              </p>
+              <ul class="list-disc pl-6 space-y-1 text-base text-stone-800">
+                <li>To land right in the middle at <strong>$e = 0$</strong> (5 Heads, 5 Tails), there are <strong>252 different combinations</strong>—so random ups and downs cancel out most of the time.</li>
+                <li>To land at the far right tail at <strong>$e = +10$</strong> (all 10 Heads in a row), there is only <strong>1 single combination</strong> out of $1,024$ ($0.098\%$).</li>
+              </ul>
+
+              <!-- Interactive 10-Coin Flip Combinatorics Visual -->
+              <div class="mt-4 pt-4 border-t border-stone-100">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3 ui-font">
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Figure 1.5 • Interactive Coin-Flip Intuition</span>
+                  <button id="simulate-coins-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white transition shadow-sm">
+                    Flip 10 Coins for 1 Student
+                  </button>
+                </div>
+                <div id="coin-result-banner" class="hidden mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs ui-font text-stone-800"></div>
+                <svg id="fig5-svg" class="w-full h-auto block" viewBox="0 0 720 270"></svg>
+                <p class="mt-2 text-xs text-stone-500 ui-font">
+                  Exact combinatorics of 10 independent $\pm 1$ random factors ($\binom{10}{k}$ ways). Hover over any bar to see how many ways that net error can occur.
+                </p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-borderWarm p-5 sm:p-6 shadow-sm space-y-3">
+              <h3 class="ui-font text-base sm:text-lg font-bold text-stone-900">2. What About the Middle of the Line ($\bar{x} = 5.5$) vs. the Two Ends ($x = 1$ or $10$)?</h3>
+              <p class="text-base text-stone-800">
+                If you look along the fitted line from $x = 1$ hour to $x = 10$ hours:
+              </p>
+              <ul class="list-disc pl-6 space-y-1.5 text-base text-stone-800">
+                <li><strong>True noise ($\epsilon$) has constant spread everywhere:</strong> Whether a student studies 1 hour or 10 hours, the vertical cloud around the line has the same thickness ($\sigma \approx 4$).</li>
+                <li><strong>Measured residuals ($e = y - \hat{y}$) are actually slightly <em>smaller</em> at the ends ($x = 1$ and $x = 10$):</strong> Extreme $x$-values act like the ends of a seesaw (high <strong>leverage</strong>). A noisy point at $x = 10$ pulls the regression line toward itself, shrinking its own measured residual slightly compared to points sitting near the pivot point in the middle ($\bar{x}$).</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- End of Chapter Footer -->
+        <footer class="pt-8 border-t-2 border-stone-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ui-font text-xs text-stone-500">
+          <div>
+            <p class="font-semibold text-stone-800">End of Chapter 1: Foundations of Linear Regression</p>
+            <p>Next Chapter Preview: Why Linear Regression Breaks on Binary Outcomes &amp; Introduction to Logistic Regression.</p>
+          </div>
+          <a href="#sec-1-1" class="px-3.5 py-2 rounded-lg border border-stone-300 bg-white hover:bg-stone-50 text-stone-800 font-medium transition no-print">
+            ↑ Back to Top
+          </a>
+        </footer>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Interactive Visualizations & Page Logic -->
+  <script>
+    // =========================================================================
+    // 1. GLOBAL TOOLTIP HELPER
+    // =========================================================================
+    const tooltip = document.getElementById('global-tooltip');
+    function showTooltip(evt, html) {
+      tooltip.innerHTML = html;
+      tooltip.classList.remove('hidden');
+      requestAnimationFrame(() => tooltip.classList.remove('opacity-0'));
+      moveTooltip(evt);
+    }
+    function moveTooltip(evt) {
+      const pad = 14;
+      let left = evt.clientX + pad;
+      let top = evt.clientY + pad;
+      const rect = tooltip.getBoundingClientRect();
+      if (left + rect.width > window.innerWidth - 10) {
+        left = evt.clientX - rect.width - pad;
+      }
+      if (top + rect.height > window.innerHeight - 10) {
+        top = evt.clientY - rect.height - pad;
+      }
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    }
+    function hideTooltip() {
+      tooltip.classList.add('opacity-0');
+      setTimeout(() => {
+        if (tooltip.classList.contains('opacity-0')) {
+          tooltip.classList.add('hidden');
+        }
+      }, 120);
+    }
+
+    // =========================================================================
+    // 2. CORE 8-POINT DATASET & OLS PARAMETERS
+    // =========================================================================
+    const baseData8 = [
+      { x: 1, y: 52 },
+      { x: 2, y: 58 },
+      { x: 3, y: 65 },
+      { x: 4, y: 71 },
+      { x: 5, y: 78 },
+      { x: 6, y: 85 },
+      { x: 7, y: 90 },
+      { x: 8, y: 96 }
+    ];
+    const m8 = 267.5 / 42.0; // 6.3690476...
+    const b8 = 74.375 - m8 * 4.5; // 45.7142857...
+    baseData8.forEach(d => {
+      d.yHat = m8 * d.x + b8;
+      d.residual = d.y - d.yHat;
+    });
+
+    // Helper for SVG creation
+    function createSvgEl(tag, attrs = {}) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        el.setAttribute(k, v);
+      }
+      return el;
+    }
+
+    // =========================================================================
+    // 3. FIGURE 1.1: PLOT THE 8 POINTS, LINE, INTERCEPT & ERROR BARS
+    // =========================================================================
+    function renderFig1() {
+      const svg = document.getElementById('fig1-svg');
+      const showErrors = document.getElementById('fig1-toggle-errors').checked;
+      svg.innerHTML = '';
+
+      const W = 720, H = 400;
+      const margin = { top: 28, right: 36, bottom: 52, left: 64 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      const xMin = 0, xMax = 9;
+      const yMin = 40, yMax = 105;
+      const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+      const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+      // Grid lines
+      for (let y = 40; y <= 100; y += 10) {
+        svg.appendChild(createSvgEl('line', {
+          x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+          stroke: '#F5F5F4', 'stroke-width': 1
+        }));
+        const lbl = createSvgEl('text', {
+          x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+          fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+        });
+        lbl.textContent = y;
+        svg.appendChild(lbl);
+      }
+      for (let x = 0; x <= 9; x += 1) {
+        svg.appendChild(createSvgEl('line', {
+          x1: sx(x), y1: margin.top, x2: sx(x), y2: H - margin.bottom,
+          stroke: '#F5F5F4', 'stroke-width': 1
+        }));
+        const lbl = createSvgEl('text', {
+          x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+          fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+        });
+        lbl.textContent = x;
+        svg.appendChild(lbl);
+      }
+
+      // Axes
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: H - margin.bottom, x2: W - margin.right, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: margin.top, x2: margin.left, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+
+      // Axis Titles
+      const xTitle = createSvgEl('text', {
+        x: margin.left + plotW / 2, y: H - 10, 'text-anchor': 'middle',
+        fill: '#44403C', 'font-size': '12', 'font-weight': '600', 'font-family': 'Inter, sans-serif'
+      });
+      xTitle.textContent = 'Hours Studied (x)';
+      svg.appendChild(xTitle);
+
+      const yTitle = createSvgEl('text', {
+        x: 18, y: margin.top + plotH / 2, 'text-anchor': 'middle',
+        transform: `rotate(-90, 18, ${margin.top + plotH / 2})`,
+        fill: '#44403C', 'font-size': '12', 'font-weight': '600', 'font-family': 'Inter, sans-serif'
+      });
+      yTitle.textContent = 'Exam Score (y)';
+      svg.appendChild(yTitle);
+
+      // Fitted Line (x = 0 to 8.8)
+      svg.appendChild(createSvgEl('line', {
+        x1: sx(0), y1: sy(b8), x2: sx(8.8), y2: sy(m8 * 8.8 + b8),
+        stroke: '#DC2626', 'stroke-width': 2.5
+      }));
+
+      // Error bars
+      if (showErrors) {
+        baseData8.forEach(d => {
+          svg.appendChild(createSvgEl('line', {
+            x1: sx(d.x), y1: sy(d.y), x2: sx(d.x), y2: sy(d.yHat),
+            stroke: d.residual >= 0 ? '#059669' : '#E11D48',
+            'stroke-width': 2, 'stroke-dasharray': '4,3'
+          }));
+        });
+      }
+
+      // Y-intercept marker at (0, 45.71)
+      const interceptDot = createSvgEl('circle', {
+        cx: sx(0), cy: sy(b8), r: 6.5, fill: '#B45309', stroke: '#FFFFFF', 'stroke-width': 2,
+        class: 'cursor-pointer'
+      });
+      interceptDot.addEventListener('mouseenter', e => showTooltip(e,
+        `<strong>Y-Intercept / Bias (b)</strong><br/>At x = 0 hours:<br/>Predicted Score = <strong>${b8.toFixed(2)}</strong>`
+      ));
+      interceptDot.addEventListener('mousemove', moveTooltip);
+      interceptDot.addEventListener('mouseleave', hideTooltip);
+      svg.appendChild(interceptDot);
+
+      const bLabel = createSvgEl('text', {
+        x: sx(0) + 12, y: sy(b8) + 4, fill: '#92400E',
+        'font-size': '11', 'font-weight': '600', 'font-family': 'Inter, sans-serif'
+      });
+      bLabel.textContent = 'b ≈ 45.71 (y-intercept)';
+      svg.appendChild(bLabel);
+
+      // Data Points
+      baseData8.forEach(d => {
+        const dot = createSvgEl('circle', {
+          cx: sx(d.x), cy: sy(d.y), r: 6, fill: '#2563EB', stroke: '#FFFFFF', 'stroke-width': 2,
+          class: 'cursor-pointer transition-transform'
+        });
+        dot.addEventListener('mouseenter', e => {
+          dot.setAttribute('r', '8');
+          const sign = d.residual >= 0 ? '+' : '';
+          showTooltip(e,
+            `<strong>Hours Studied (x): ${d.x}</strong><br/>` +
+            `Actual Score (y): <strong>${d.y}</strong><br/>` +
+            `Predicted (ŷ): <strong>${d.yHat.toFixed(2)}</strong><br/>` +
+            `Residual (e): <strong>${sign}${d.residual.toFixed(2)}</strong>`
+          );
+        });
+        dot.addEventListener('mousemove', moveTooltip);
+        dot.addEventListener('mouseleave', () => {
+          dot.setAttribute('r', '6');
+          hideTooltip();
+        });
+        svg.appendChild(dot);
+      });
+    }
+    document.getElementById('fig1-toggle-errors').addEventListener('change', renderFig1);
+
+    // =========================================================================
+    // 4. FIGURE 1.2: SIGNAL VS. NOISE SLIDER VISUALIZATION
+    // =========================================================================
+    const noiseOffsets = [-3.2, +4.5, -2.1, +5.0, -4.8, +3.6, -2.5, -0.5];
+    function renderFig2() {
+      const svg = document.getElementById('fig2-svg');
+      const mult = parseFloat(document.getElementById('noise-slider').value);
+      const showLabels = document.getElementById('fig2-toggle-labels').checked;
+      document.getElementById('noise-val-label').textContent = mult.toFixed(1) + 'x';
+      svg.innerHTML = '';
+
+      const W = 720, H = 400;
+      const margin = { top: 28, right: 36, bottom: 52, left: 64 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      const xMin = 0.5, xMax = 8.8;
+      const yMin = 40, yMax = 110;
+      const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+      const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+      // Grid
+      for (let y = 40; y <= 110; y += 10) {
+        svg.appendChild(createSvgEl('line', {
+          x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+          stroke: '#F5F5F4', 'stroke-width': 1
+        }));
+        const lbl = createSvgEl('text', {
+          x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+          fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+        });
+        lbl.textContent = y;
+        svg.appendChild(lbl);
+      }
+      for (let x = 1; x <= 8; x += 1) {
+        svg.appendChild(createSvgEl('line', {
+          x1: sx(x), y1: margin.top, x2: sx(x), y2: H - margin.bottom,
+          stroke: '#F5F5F4', 'stroke-width': 1
+        }));
+        const lbl = createSvgEl('text', {
+          x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+          fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+        });
+        lbl.textContent = x;
+        svg.appendChild(lbl);
+      }
+
+      // Axes
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: H - margin.bottom, x2: W - margin.right, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: margin.top, x2: margin.left, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+
+      // Signal line
+      svg.appendChild(createSvgEl('line', {
+        x1: sx(0.6), y1: sy(m8 * 0.6 + b8), x2: sx(8.6), y2: sy(m8 * 8.6 + b8),
+        stroke: '#1C1917', 'stroke-width': 2.5
+      }));
+
+      const sigBadge = createSvgEl('text', {
+        x: sx(8.5), y: sy(m8 * 8.5 + b8) - 10, 'text-anchor': 'end',
+        fill: '#1C1917', 'font-size': '11', 'font-weight': '700', 'font-family': 'Inter, sans-serif'
+      });
+      sigBadge.textContent = 'Signal: ŷ = 6.37x + 45.71';
+      svg.appendChild(sigBadge);
+
+      // Points & Residuals
+      baseData8.forEach((d, idx) => {
+        const displayY = d.y + mult * noiseOffsets[idx];
+        const res = displayY - d.yHat;
+        const isPos = res >= 0;
+        const color = isPos ? '#059669' : '#E11D48';
+
+        // Vertical residual segment
+        svg.appendChild(createSvgEl('line', {
+          x1: sx(d.x), y1: sy(displayY), x2: sx(d.x), y2: sy(d.yHat),
+          stroke: color, 'stroke-width': 2.2, 'stroke-dasharray': '4,3'
+        }));
+
+        // Anchor dot on signal line
+        svg.appendChild(createSvgEl('circle', {
+          cx: sx(d.x), cy: sy(d.yHat), r: 3, fill: '#1C1917'
+        }));
+
+        // Observed dot
+        const dot = createSvgEl('circle', {
+          cx: sx(d.x), cy: sy(displayY), r: 6, fill: color, stroke: '#FFFFFF', 'stroke-width': 2,
+          class: 'cursor-pointer'
+        });
+        dot.addEventListener('mouseenter', e => {
+          dot.setAttribute('r', '8');
+          const sign = res >= 0 ? '+' : '';
+          showTooltip(e,
+            `<strong>Hours Studied (x): ${d.x}</strong><br/>` +
+            `Signal (ŷ): <strong>${d.yHat.toFixed(2)}</strong><br/>` +
+            `Noise / Residual (e): <strong>${sign}${res.toFixed(2)}</strong><br/>` +
+            `Observed Score (y): <strong>${displayY.toFixed(2)}</strong>`
+          );
+        });
+        dot.addEventListener('mousemove', moveTooltip);
+        dot.addEventListener('mouseleave', () => {
+          dot.setAttribute('r', '6');
+          hideTooltip();
+        });
+        svg.appendChild(dot);
+
+        if (showLabels) {
+          const sign = res >= 0 ? '+' : '';
+          const lbl = createSvgEl('text', {
+            x: sx(d.x), y: isPos ? sy(displayY) - 10 : sy(displayY) + 18,
+            'text-anchor': 'middle', fill: color,
+            'font-size': '10.5', 'font-weight': '600', 'font-family': 'JetBrains Mono, monospace'
+          });
+          lbl.textContent = `${sign}${res.toFixed(2)}`;
+          svg.appendChild(lbl);
+        }
+      });
+
+      // Axis labels
+      const xTitle = createSvgEl('text', {
+        x: margin.left + plotW / 2, y: H - 10, 'text-anchor': 'middle',
+        fill: '#44403C', 'font-size': '12', 'font-weight': '600', 'font-family': 'Inter, sans-serif'
+      });
+      xTitle.textContent = 'Hours Studied (x)';
+      svg.appendChild(xTitle);
+
+      const yTitle = createSvgEl('text', {
+        x: 18, y: margin.top + plotH / 2, 'text-anchor': 'middle',
+        transform: `rotate(-90, 18, ${margin.top + plotH / 2})`,
+        fill: '#44403C', 'font-size': '12', 'font-weight': '600', 'font-family': 'Inter, sans-serif'
+      });
+      yTitle.textContent = 'Exam Score (Signal + Noise)';
+      svg.appendChild(yTitle);
+    }
+    document.getElementById('noise-slider').addEventListener('input', renderFig2);
+    document.getElementById('fig2-toggle-labels').addEventListener('change', renderFig2);
+
+    // =========================================================================
+    // 5. FIGURE 1.3: 3-STEP RESIDUAL NORMALITY DIAGNOSTIC (8 POINTS)
+    // =========================================================================
+    let fig3Step = 1;
+    const fig3Meta = {
+      1: {
+        title: 'Step 1: Random Scatter Around Zero',
+        caption: 'Points bounce unpredictably above (green) and below (red) the dashed 0.0 line with no curved U-shape or funnel pattern, and their mean is strictly 0.00.'
+      },
+      2: {
+        title: 'Step 2: Histogram vs. Theoretical Bell Curve (μ = 0, σ = 0.55)',
+        caption: '6 of the 8 residuals cluster tightly within ±0.5 points of the line, while a single positive point (+1.07 at x = 6) sits in the right tail—matching the shape of a normal curve.'
+      },
+      3: {
+        title: 'Step 3: Normal Q-Q (Quantile-Quantile) Plot',
+        caption: 'Plots our 8 sorted residuals against ideal Normal quantiles. Because the dots hug the red diagonal reference line (Shapiro-Wilk W = 0.94, p = 0.62 > 0.05), normality holds.'
+      }
+    };
+
+    function renderFig3() {
+      const svg = document.getElementById('fig3-svg');
+      svg.innerHTML = '';
+
+      // Update UI controls
+      document.getElementById('fig3-title').textContent = fig3Meta[fig3Step].title;
+      document.getElementById('fig3-caption').textContent = fig3Meta[fig3Step].caption;
+      document.getElementById('fig3-prev').disabled = fig3Step === 1;
+      document.getElementById('fig3-next').disabled = fig3Step === 3;
+      document.querySelectorAll('.fig3-tab').forEach(btn => {
+        const s = Number(btn.dataset.fig3Step);
+        if (s === fig3Step) {
+          btn.className = 'fig3-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-stone-900 shadow-sm transition';
+        } else {
+          btn.className = 'fig3-tab px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition';
+        }
+      });
+
+      const W = 720, H = 380;
+      const margin = { top: 26, right: 36, bottom: 52, left: 64 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      if (fig3Step === 1) {
+        // Step 1: Residuals vs Hours Studied
+        const xMin = 0.5, xMax = 8.5, yMin = -1.0, yMax = 1.4;
+        const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        [-1.0, -0.5, 0, 0.5, 1.0].forEach(y => {
+          svg.appendChild(createSvgEl('line', {
+            x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+            stroke: y === 0 ? '#1C1917' : '#F5F5F4',
+            'stroke-width': y === 0 ? 1.8 : 1,
+            'stroke-dasharray': y === 0 ? '6,4' : 'none'
+          }));
+          const lbl = createSvgEl('text', {
+            x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = y.toFixed(1);
+          svg.appendChild(lbl);
+        });
+
+        for (let x = 1; x <= 8; x++) {
+          const lbl = createSvgEl('text', {
+            x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = x;
+          svg.appendChild(lbl);
+        }
+
+        baseData8.forEach(d => {
+          const isPos = d.residual >= 0;
+          const color = isPos ? '#059669' : '#E11D48';
+          svg.appendChild(createSvgEl('line', {
+            x1: sx(d.x), y1: sy(0), x2: sx(d.x), y2: sy(d.residual),
+            stroke: color, 'stroke-width': 2, 'stroke-dasharray': '3,3'
+          }));
+          const dot = createSvgEl('circle', {
+            cx: sx(d.x), cy: sy(d.residual), r: 6.5, fill: color, stroke: '#FFFFFF', 'stroke-width': 2,
+            class: 'cursor-pointer'
+          });
+          dot.addEventListener('mouseenter', e => {
+            dot.setAttribute('r', '8.5');
+            const sign = d.residual >= 0 ? '+' : '';
+            showTooltip(e, `<strong>Student at x = ${d.x} hrs</strong><br/>Residual (e): <strong>${sign}${d.residual.toFixed(2)}</strong>`);
+          });
+          dot.addEventListener('mousemove', moveTooltip);
+          dot.addEventListener('mouseleave', () => { dot.setAttribute('r', '6.5'); hideTooltip(); });
+          svg.appendChild(dot);
+
+          const sign = d.residual >= 0 ? '+' : '';
+          const txt = createSvgEl('text', {
+            x: sx(d.x), y: isPos ? sy(d.residual) - 10 : sy(d.residual) + 18,
+            'text-anchor': 'middle', fill: color, 'font-size': '11', 'font-weight': '600', 'font-family': 'JetBrains Mono, monospace'
+          });
+          txt.textContent = `${sign}${d.residual.toFixed(2)}`;
+          svg.appendChild(txt);
+        });
+
+        drawAxisTitles(svg, margin, plotW, plotH, H, 'Hours Studied (x)', 'Residual (e = y - ŷ)');
+      } else if (fig3Step === 2) {
+        // Step 2: Histogram + Normal PDF Curve
+        const xMin = -1.5, xMax = 1.6, yMin = 0, yMax = 1.25;
+        const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        [0, 0.25, 0.5, 0.75, 1.0, 1.25].forEach(y => {
+          svg.appendChild(createSvgEl('line', {
+            x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+            stroke: '#F5F5F4', 'stroke-width': 1
+          }));
+          const lbl = createSvgEl('text', {
+            x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = y.toFixed(2);
+          svg.appendChild(lbl);
+        });
+
+        [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5].forEach(x => {
+          const lbl = createSvgEl('text', {
+            x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = x.toFixed(1);
+          svg.appendChild(lbl);
+        });
+
+        // Bins: [-1.0,-0.5], [-0.5,0.0], [0.0,0.5], [0.5,1.0], [1.0,1.5]
+        const bins = [
+          { x0: -1.0, x1: -0.5, count: 1, density: 0.25 },
+          { x0: -0.5, x1: 0.0, count: 4, density: 1.00 },
+          { x0: 0.0, x1: 0.5, count: 2, density: 0.50 },
+          { x0: 0.5, x1: 1.0, count: 0, density: 0.00 },
+          { x0: 1.0, x1: 1.5, count: 1, density: 0.25 }
+        ];
+        bins.forEach(b => {
+          if (b.density > 0) {
+            const rect = createSvgEl('rect', {
+              x: sx(b.x0) + 1, y: sy(b.density),
+              width: Math.max(0, sx(b.x1) - sx(b.x0) - 2),
+              height: sy(0) - sy(b.density),
+              fill: '#93C5FD', stroke: '#2563EB', 'stroke-width': 1.2, rx: 4,
+              class: 'cursor-pointer'
+            });
+            rect.addEventListener('mouseenter', e => {
+              rect.setAttribute('fill', '#60A5FA');
+              showTooltip(e, `<strong>Residual Bin [${b.x0.toFixed(1)}, ${b.x1.toFixed(1)}]</strong><br/>Students in bin: <strong>${b.count} of 8</strong><br/>Density: <strong>${b.density.toFixed(2)}</strong>`);
+            });
+            rect.addEventListener('mousemove', moveTooltip);
+            rect.addEventListener('mouseleave', () => { rect.setAttribute('fill', '#93C5FD'); hideTooltip(); });
+            svg.appendChild(rect);
+          }
+        });
+
+        // Normal Bell Curve (mu = 0, sigma = 0.5548)
+        const sigma = 0.5548;
+        let pathD = '';
+        for (let i = 0; i <= 120; i++) {
+          const xv = -1.5 + (3.1 * i) / 120;
+          const pdf = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow(xv / sigma, 2));
+          pathD += (i === 0 ? 'M' : 'L') + `${sx(xv).toFixed(1)},${sy(pdf).toFixed(1)} `;
+        }
+        svg.appendChild(createSvgEl('path', {
+          d: pathD, fill: 'none', stroke: '#DC2626', 'stroke-width': 2.8
+        }));
+
+        // Mean 0 vertical dashed line
+        svg.appendChild(createSvgEl('line', {
+          x1: sx(0), y1: margin.top, x2: sx(0), y2: sy(0),
+          stroke: '#1C1917', 'stroke-width': 1.5, 'stroke-dasharray': '5,4'
+        }));
+
+        drawAxisTitles(svg, margin, plotW, plotH, H, 'Residual Value (e)', 'Probability Density');
+      } else {
+        // Step 3: Normal Q-Q Plot
+        const qqPoints = [
+          { z: -1.385, r: -0.6667, label: 'x = 8' },
+          { z: -0.838, r: -0.4524, label: 'x = 2' },
+          { z: -0.472, r: -0.2976, label: 'x = 7' },
+          { z: -0.153, r: -0.1905, label: 'x = 4' },
+          { z: +0.153, r: -0.0833, label: 'x = 1' },
+          { z: +0.472, r: +0.1786, label: 'x = 3' },
+          { z: +0.838, r: +0.4405, label: 'x = 5' },
+          { z: +1.385, r: +1.0714, label: 'x = 6' }
+        ];
+        const xMin = -1.6, xMax = 1.6, yMin = -0.9, yMax = 1.3;
+        const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        [-0.5, 0.0, 0.5, 1.0].forEach(y => {
+          svg.appendChild(createSvgEl('line', {
+            x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+            stroke: '#F5F5F4', 'stroke-width': 1
+          }));
+          const lbl = createSvgEl('text', {
+            x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = y.toFixed(1);
+          svg.appendChild(lbl);
+        });
+
+        [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5].forEach(x => {
+          svg.appendChild(createSvgEl('line', {
+            x1: sx(x), y1: margin.top, x2: sx(x), y2: H - margin.bottom,
+            stroke: '#F5F5F4', 'stroke-width': 1
+          }));
+          const lbl = createSvgEl('text', {
+            x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = x.toFixed(1);
+          svg.appendChild(lbl);
+        });
+
+        // Ideal diagonal reference line y = 0.592 * z
+        svg.appendChild(createSvgEl('line', {
+          x1: sx(-1.45), y1: sy(0.592 * -1.45),
+          x2: sx(1.45), y2: sy(0.592 * 1.45),
+          stroke: '#DC2626', 'stroke-width': 2.2, 'stroke-dasharray': '6,4'
+        }));
+
+        qqPoints.forEach(pt => {
+          const dot = createSvgEl('circle', {
+            cx: sx(pt.z), cy: sy(pt.r), r: 6.5, fill: '#2563EB', stroke: '#FFFFFF', 'stroke-width': 2,
+            class: 'cursor-pointer'
+          });
+          dot.addEventListener('mouseenter', e => {
+            dot.setAttribute('r', '8.5');
+            const sign = pt.r >= 0 ? '+' : '';
+            showTooltip(e,
+              `<strong>Student (${pt.label})</strong><br/>` +
+              `Theoretical Normal Quantile: <strong>${pt.z.toFixed(2)}</strong><br/>` +
+              `Ordered Residual: <strong>${sign}${pt.r.toFixed(2)}</strong>`
+            );
+          });
+          dot.addEventListener('mousemove', moveTooltip);
+          dot.addEventListener('mouseleave', () => { dot.setAttribute('r', '6.5'); hideTooltip(); });
+          svg.appendChild(dot);
+        });
+
+        drawAxisTitles(svg, margin, plotW, plotH, H, 'Theoretical Normal Quantiles', 'Ordered Residuals');
+      }
+
+      // Base axes frame
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: H - margin.bottom, x2: W - margin.right, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: margin.top, x2: margin.left, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+    }
+
+    function drawAxisTitles(svg, margin, plotW, plotH, H, xText, yText) {
+      const xTitle = createSvgEl('text', {
+        x: margin.left + plotW / 2, y: H - 10, 'text-anchor': 'middle',
+        fill: '#44403C', 'font-size': '12', 'font-weight': '600', 'font-family': 'Inter, sans-serif'
+      });
+      xTitle.textContent = xText;
+      svg.appendChild(xTitle);
+
+      const yTitle = createSvgEl('text', {
+        x: 18, y: margin.top + plotH / 2, 'text-anchor': 'middle',
+        transform: `rotate(-90, 18, ${margin.top + plotH / 2})`,
+        fill: '#44403C', 'font-size': '12', 'font-weight': '600', 'font-family': 'Inter, sans-serif'
+      });
+      yTitle.textContent = yText;
+      svg.appendChild(yTitle);
+    }
+
+    document.querySelectorAll('.fig3-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fig3Step = Number(btn.dataset.fig3Step);
+        renderFig3();
+      });
+    });
+    document.getElementById('fig3-prev').addEventListener('click', () => {
+      if (fig3Step > 1) { fig3Step--; renderFig3(); }
+    });
+    document.getElementById('fig3-next').addEventListener('click', () => {
+      if (fig3Step < 3) { fig3Step++; renderFig3(); }
+    });
+
+    // =========================================================================
+    // 6. FIGURE 1.4: 300 DATA POINTS 4-STEP INTERACTIVE WALKTHROUGH
+    // =========================================================================
+    // Seeded Mulberry32 + Box-Muller generator for deterministic 300 points
+    function mulberry32(a) {
+      return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+    const rand = mulberry32(42);
+    function randNormal() {
+      let u = 0, v = 0;
+      while (u === 0) u = rand();
+      while (v === 0) v = rand();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    const data300 = [];
+    for (let i = 0; i < 300; i++) {
+      const x = 1 + rand() * 9;
+      const noise = randNormal() * 4.0;
+      const y = 6.37 * x + 45.71 + noise;
+      data300.push({ id: i + 1, x, y });
+    }
+    const meanX300 = data300.reduce((s, d) => s + d.x, 0) / 300;
+    const meanY300 = data300.reduce((s, d) => s + d.y, 0) / 300;
+    const num300 = data300.reduce((s, d) => s + (d.x - meanX300) * (d.y - meanY300), 0);
+    const den300 = data300.reduce((s, d) => s + Math.pow(d.x - meanX300, 2), 0);
+    const m300 = num300 / den300;
+    const b300 = meanY300 - m300 * meanX300;
+
+    data300.forEach(d => {
+      d.yHat = m300 * d.x + b300;
+      d.residual = d.y - d.yHat;
+    });
+    const resMean300 = data300.reduce((s, d) => s + d.residual, 0) / 300;
+    const resStd300 = Math.sqrt(data300.reduce((s, d) => s + Math.pow(d.residual - resMean300, 2), 0) / 300);
+
+    let fig4Step = 1;
+    const fig4Meta = {
+      1: {
+        title: 'Part 1: Raw Data Cloud (n = 300 Students)',
+        caption: 'Before drawing any line, we observe 300 students’ study hours (1 to 10 hrs) and exam scores. Hover over any dot to inspect that student’s record.'
+      },
+      2: {
+        title: `Part 2: Fitted Line (ŷ = ${m300.toFixed(2)}x + ${b300.toFixed(2)})`,
+        caption: `The calculated OLS line cuts cleanly through the center of all 300 points. Hover over any dot to highlight its predicted score and vertical residual gap.`
+      },
+      3: {
+        title: `Part 3a: Residuals Scatter Around Zero (σ = ${resStd300.toFixed(2)})`,
+        caption: 'Flattening the tilted regression line into a horizontal 0.0 baseline confirms that errors scatter randomly above and below zero with constant spread (±1σ dashed lines).'
+      },
+      4: {
+        title: `Part 3b: Residuals Histogram & Normal Bell Curve (μ = 0.00, σ = ${resStd300.toFixed(2)})`,
+        caption: 'With 300 data points, stacking the residuals into 18 bins forms a smooth, symmetric bell curve right around 0—confirming the Central Limit Theorem.'
+      }
+    };
+
+    function renderFig4() {
+      const svg = document.getElementById('fig4-svg');
+      svg.innerHTML = '';
+
+      document.getElementById('fig4-title').textContent = fig4Meta[fig4Step].title;
+      document.getElementById('fig4-caption').textContent = fig4Meta[fig4Step].caption;
+      document.getElementById('fig4-prev').disabled = fig4Step === 1;
+      document.getElementById('fig4-next').disabled = fig4Step === 4;
+      document.querySelectorAll('.fig4-tab').forEach(btn => {
+        const s = Number(btn.dataset.fig4Step);
+        if (s === fig4Step) {
+          btn.className = 'fig4-tab px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-stone-900 shadow-sm transition';
+        } else {
+          btn.className = 'fig4-tab px-2.5 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition';
+        }
+      });
+
+      const W = 720, H = 390;
+      const margin = { top: 26, right: 36, bottom: 52, left: 64 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      if (fig4Step === 1 || fig4Step === 2) {
+        const xMin = 0.5, xMax = 10.5, yMin = 40, yMax = 122;
+        const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        for (let y = 40; y <= 120; y += 20) {
+          svg.appendChild(createSvgEl('line', {
+            x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+            stroke: '#F5F5F4', 'stroke-width': 1
+          }));
+          const lbl = createSvgEl('text', {
+            x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = y;
+          svg.appendChild(lbl);
+        }
+        for (let x = 1; x <= 10; x += 1) {
+          svg.appendChild(createSvgEl('line', {
+            x1: sx(x), y1: margin.top, x2: sx(x), y2: H - margin.bottom,
+            stroke: '#F5F5F4', 'stroke-width': 1
+          }));
+          const lbl = createSvgEl('text', {
+            x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = x;
+          svg.appendChild(lbl);
+        }
+
+        // Dynamic hover residual line for Step 2
+        const hoverLine = createSvgEl('line', {
+          x1: 0, y1: 0, x2: 0, y2: 0, stroke: '#1C1917', 'stroke-width': 2,
+          'stroke-dasharray': '3,3', visibility: 'hidden'
+        });
+
+        data300.forEach(d => {
+          const dot = createSvgEl('circle', {
+            cx: sx(d.x), cy: sy(d.y), r: 3.4,
+            fill: '#3B82F6', 'fill-opacity': fig4Step === 2 ? '0.55' : '0.7',
+            class: 'cursor-pointer'
+          });
+          dot.addEventListener('mouseenter', e => {
+            dot.setAttribute('r', '6');
+            dot.setAttribute('fill-opacity', '1');
+            if (fig4Step === 2) {
+              hoverLine.setAttribute('x1', sx(d.x));
+              hoverLine.setAttribute('y1', sy(d.y));
+              hoverLine.setAttribute('x2', sx(d.x));
+              hoverLine.setAttribute('y2', sy(d.yHat));
+              hoverLine.setAttribute('visibility', 'visible');
+            }
+            const sign = d.residual >= 0 ? '+' : '';
+            showTooltip(e,
+              `<strong>Student #${d.id} (x = ${d.x.toFixed(2)} hrs)</strong><br/>` +
+              `Actual Score: <strong>${d.y.toFixed(1)}</strong>` +
+              (fig4Step === 2 ? `<br/>Predicted (ŷ): <strong>${d.yHat.toFixed(1)}</strong><br/>Residual (e): <strong>${sign}${d.residual.toFixed(2)}</strong>` : '')
+            );
+          });
+          dot.addEventListener('mousemove', moveTooltip);
+          dot.addEventListener('mouseleave', () => {
+            dot.setAttribute('r', '3.4');
+            dot.setAttribute('fill-opacity', fig4Step === 2 ? '0.55' : '0.7');
+            hoverLine.setAttribute('visibility', 'hidden');
+            hideTooltip();
+          });
+          svg.appendChild(dot);
+        });
+
+        if (fig4Step === 2) {
+          svg.appendChild(createSvgEl('line', {
+            x1: sx(1), y1: sy(m300 * 1 + b300),
+            x2: sx(10), y2: sy(m300 * 10 + b300),
+            stroke: '#DC2626', 'stroke-width': 2.8
+          }));
+          svg.appendChild(hoverLine);
+        }
+
+        drawAxisTitles(svg, margin, plotW, plotH, H, 'Hours Studied (x)', 'Exam Score (y)');
+      } else if (fig4Step === 3) {
+        // Step 3a: Residuals Scatter around 0
+        const xMin = 0.5, xMax = 10.5, yMin = -14, yMax = 14;
+        const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        [-10, -5, 0, 5, 10].forEach(y => {
+          svg.appendChild(createSvgEl('line', {
+            x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+            stroke: y === 0 ? '#1C1917' : '#F5F5F4',
+            'stroke-width': y === 0 ? 1.8 : 1,
+            'stroke-dasharray': y === 0 ? '6,4' : 'none'
+          }));
+          const lbl = createSvgEl('text', {
+            x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = y;
+          svg.appendChild(lbl);
+        });
+
+        // ±1 sigma reference bands
+        [resStd300, -resStd300].forEach(band => {
+          svg.appendChild(createSvgEl('line', {
+            x1: margin.left, y1: sy(band), x2: W - margin.right, y2: sy(band),
+            stroke: '#D97706', 'stroke-width': 1.2, 'stroke-dasharray': '4,4'
+          }));
+        });
+
+        for (let x = 1; x <= 10; x += 1) {
+          const lbl = createSvgEl('text', {
+            x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = x;
+          svg.appendChild(lbl);
+        }
+
+        data300.forEach(d => {
+          const isPos = d.residual >= 0;
+          const dot = createSvgEl('circle', {
+            cx: sx(d.x), cy: sy(d.residual), r: 3.5,
+            fill: isPos ? '#10B981' : '#F43F5E', 'fill-opacity': '0.68',
+            class: 'cursor-pointer'
+          });
+          dot.addEventListener('mouseenter', e => {
+            dot.setAttribute('r', '6');
+            dot.setAttribute('fill-opacity', '1');
+            const sign = d.residual >= 0 ? '+' : '';
+            showTooltip(e, `<strong>Student #${d.id} (x = ${d.x.toFixed(2)} hrs)</strong><br/>Residual (e): <strong>${sign}${d.residual.toFixed(2)}</strong>`);
+          });
+          dot.addEventListener('mousemove', moveTooltip);
+          dot.addEventListener('mouseleave', () => { dot.setAttribute('r', '3.5'); dot.setAttribute('fill-opacity', '0.68'); hideTooltip(); });
+          svg.appendChild(dot);
+        });
+
+        drawAxisTitles(svg, margin, plotW, plotH, H, 'Hours Studied (x)', 'Residual Error (e = y - ŷ)');
+      } else {
+        // Step 3b: 18-bin Histogram + Normal Bell Curve
+        const numBins = 18;
+        const binMin = -13.5, binMax = 13.5;
+        const binW = (binMax - binMin) / numBins;
+        const counts = new Array(numBins).fill(0);
+        data300.forEach(d => {
+          const idx = Math.min(numBins - 1, Math.max(0, Math.floor((d.residual - binMin) / binW)));
+          counts[idx]++;
+        });
+        const densities = counts.map(c => c / (300 * binW));
+
+        const xMin = -14, xMax = 14, yMin = 0, yMax = 0.13;
+        const sx = x => margin.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        const sy = y => margin.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        [0, 0.03, 0.06, 0.09, 0.12].forEach(y => {
+          svg.appendChild(createSvgEl('line', {
+            x1: margin.left, y1: sy(y), x2: W - margin.right, y2: sy(y),
+            stroke: '#F5F5F4', 'stroke-width': 1
+          }));
+          const lbl = createSvgEl('text', {
+            x: margin.left - 10, y: sy(y) + 4, 'text-anchor': 'end',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = y.toFixed(2);
+          svg.appendChild(lbl);
+        });
+
+        [-12, -8, -4, 0, 4, 8, 12].forEach(x => {
+          const lbl = createSvgEl('text', {
+            x: sx(x), y: H - margin.bottom + 20, 'text-anchor': 'middle',
+            fill: '#78716C', 'font-size': '11', 'font-family': 'Inter, sans-serif'
+          });
+          lbl.textContent = x;
+          svg.appendChild(lbl);
+        });
+
+        // Draw bars
+        for (let i = 0; i < numBins; i++) {
+          const x0 = binMin + i * binW;
+          const x1 = x0 + binW;
+          const dens = densities[i];
+          if (dens > 0) {
+            const rect = createSvgEl('rect', {
+              x: sx(x0) + 1, y: sy(dens),
+              width: Math.max(0, sx(x1) - sx(x0) - 2),
+              height: sy(0) - sy(dens),
+              fill: '#C4B5FD', stroke: '#7C3AED', 'stroke-width': 1, rx: 3,
+              class: 'cursor-pointer'
+            });
+            rect.addEventListener('mouseenter', e => {
+              rect.setAttribute('fill', '#A78BFA');
+              showTooltip(e, `<strong>Residual Range [${x0.toFixed(1)}, ${x1.toFixed(1)}]</strong><br/>Count: <strong>${counts[i]} / 300 students</strong><br/>Density: <strong>${dens.toFixed(3)}</strong>`);
+            });
+            rect.addEventListener('mousemove', moveTooltip);
+            rect.addEventListener('mouseleave', () => { rect.setAttribute('fill', '#C4B5FD'); hideTooltip(); });
+            svg.appendChild(rect);
+          }
+        }
+
+        // Normal Bell Curve
+        let pathD = '';
+        for (let i = 0; i <= 150; i++) {
+          const xv = -14 + (28 * i) / 150;
+          const pdf = (1 / (resStd300 * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((xv - resMean300) / resStd300, 2));
+          pathD += (i === 0 ? 'M' : 'L') + `${sx(xv).toFixed(1)},${sy(pdf).toFixed(1)} `;
+        }
+        svg.appendChild(createSvgEl('path', {
+          d: pathD, fill: 'none', stroke: '#DC2626', 'stroke-width': 2.8
+        }));
+
+        // Mean 0 vertical dashed line
+        svg.appendChild(createSvgEl('line', {
+          x1: sx(0), y1: margin.top, x2: sx(0), y2: sy(0),
+          stroke: '#1C1917', 'stroke-width': 1.5, 'stroke-dasharray': '5,4'
+        }));
+
+        drawAxisTitles(svg, margin, plotW, plotH, H, 'Residual Value (e)', 'Probability Density');
+      }
+
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: H - margin.bottom, x2: W - margin.right, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: margin.top, x2: margin.left, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+    }
+
+    document.querySelectorAll('.fig4-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fig4Step = Number(btn.dataset.fig4Step);
+        renderFig4();
+      });
+    });
+    document.getElementById('fig4-prev').addEventListener('click', () => {
+      if (fig4Step > 1) { fig4Step--; renderFig4(); }
+    });
+    document.getElementById('fig4-next').addEventListener('click', () => {
+      if (fig4Step < 4) { fig4Step++; renderFig4(); }
+    });
+
+    // Copy Python code button (iFrame safe)
+    document.getElementById('copy-code-btn').addEventListener('click', () => {
+      const codeText = document.getElementById('python-code-block').innerText;
+      const ta = document.createElement('textarea');
+      ta.value = codeText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('copy-code-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy Python Code'; }, 1800);
+    });
+
+    // =========================================================================
+    // 7. FIGURE 1.5: 10-COIN FLIP COMBINATORICS VISUALIZATION
+    // =========================================================================
+    const coinCombos = [
+      { heads: 0, net: -10, ways: 1 },
+      { heads: 1, net: -8,  ways: 10 },
+      { heads: 2, net: -6,  ways: 45 },
+      { heads: 3, net: -4,  ways: 120 },
+      { heads: 4, net: -2,  ways: 210 },
+      { heads: 5, net: 0,   ways: 252 },
+      { heads: 6, net: +2,  ways: 210 },
+      { heads: 7, net: +4,  ways: 120 },
+      { heads: 8, net: +6,  ways: 45 },
+      { heads: 9, net: +8,  ways: 10 },
+      { heads: 10, net: +10, ways: 1 }
+    ];
+    let highlightedNet = null;
+
+    function renderFig5() {
+      const svg = document.getElementById('fig5-svg');
+      svg.innerHTML = '';
+
+      const W = 720, H = 270;
+      const margin = { top: 24, right: 30, bottom: 46, left: 56 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      const maxWays = 270;
+      const barSlot = plotW / coinCombos.length;
+      const sy = w => margin.top + plotH - (w / maxWays) * plotH;
+
+      [0, 50, 100, 150, 200, 250].forEach(w => {
+        svg.appendChild(createSvgEl('line', {
+          x1: margin.left, y1: sy(w), x2: W - margin.right, y2: sy(w),
+          stroke: '#F5F5F4', 'stroke-width': 1
+        }));
+        const lbl = createSvgEl('text', {
+          x: margin.left - 8, y: sy(w) + 4, 'text-anchor': 'end',
+          fill: '#78716C', 'font-size': '10.5', 'font-family': 'Inter, sans-serif'
+        });
+        lbl.textContent = w;
+        svg.appendChild(lbl);
+      });
+
+      coinCombos.forEach((c, i) => {
+        const bx = margin.left + i * barSlot + 8;
+        const bw = barSlot - 16;
+        const isActive = highlightedNet === c.net;
+        const isCenter = c.net === 0;
+        const fill = isActive ? '#B45309' : (isCenter ? '#D97706' : '#FDE68A');
+
+        const rect = createSvgEl('rect', {
+          x: bx, y: sy(c.ways), width: bw, height: Math.max(2, sy(0) - sy(c.ways)),
+          fill, stroke: '#B45309', 'stroke-width': 1.2, rx: 5, class: 'cursor-pointer'
+        });
+        rect.addEventListener('mouseenter', e => {
+          const sign = c.net > 0 ? '+' : '';
+          showTooltip(e,
+            `<strong>Net Error: ${sign}${c.net} pts</strong><br/>` +
+            `(${c.heads} Heads, ${10 - c.heads} Tails)<br/>` +
+            `Combinations: <strong>${c.ways} / 1,024</strong> (${((c.ways / 1024) * 100).toFixed(1)}%)`
+          );
+        });
+        rect.addEventListener('mousemove', moveTooltip);
+        rect.addEventListener('mouseleave', hideTooltip);
+        svg.appendChild(rect);
+
+        // Ways label above bar
+        const wLbl = createSvgEl('text', {
+          x: bx + bw / 2, y: sy(c.ways) - 6, 'text-anchor': 'middle',
+          fill: '#44403C', 'font-size': '10', 'font-weight': '600', 'font-family': 'JetBrains Mono, monospace'
+        });
+        wLbl.textContent = c.ways;
+        svg.appendChild(wLbl);
+
+        // X-axis net score label
+        const sign = c.net > 0 ? '+' : '';
+        const xLbl = createSvgEl('text', {
+          x: bx + bw / 2, y: H - margin.bottom + 18, 'text-anchor': 'middle',
+          fill: '#44403C', 'font-size': '11', 'font-weight': isCenter ? '700' : '500',
+          'font-family': 'JetBrains Mono, monospace'
+        });
+        xLbl.textContent = `${sign}${c.net}`;
+        svg.appendChild(xLbl);
+      });
+
+      svg.appendChild(createSvgEl('line', {
+        x1: margin.left, y1: H - margin.bottom, x2: W - margin.right, y2: H - margin.bottom,
+        stroke: '#A8A29E', 'stroke-width': 1.5
+      }));
+
+      drawAxisTitles(svg, margin, plotW, plotH, H, 'Net Random Error (Sum of 10 Coin Flips)', 'Ways to Occur');
+    }
+
+    document.getElementById('simulate-coins-btn').addEventListener('click', () => {
+      let heads = 0;
+      const flips = [];
+      for (let i = 0; i < 10; i++) {
+        const isHead = Math.random() < 0.5;
+        if (isHead) heads++;
+        flips.push(isHead ? 'H(+1)' : 'T(-1)');
+      }
+      const net = heads - (10 - heads);
+      highlightedNet = net;
+      const sign = net > 0 ? '+' : '';
+      const banner = document.getElementById('coin-result-banner');
+      banner.classList.remove('hidden');
+      banner.innerHTML = `<strong>Simulated Student:</strong> ${flips.join(' ')} &rarr; <strong>${heads} Heads, ${10 - heads} Tails</strong> = Net Residual of <strong>${sign}${net} points</strong> (highlighted in dark amber below).`;
+      renderFig5();
+    });
+
+    // =========================================================================
+    // 8. INITIALIZE ALL INTERACTIVE FIGURES ON LOAD
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      renderFig1();
+      renderFig2();
+      renderFig3();
+      renderFig4();
+      renderFig5();
+    });
+  </script>
+</body>
+</html>
